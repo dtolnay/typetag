@@ -165,6 +165,10 @@ impl WebEvent for Click {
 }
 ```
 
+```json
+{"type":"mouse_button_down","x":10,"y":10}
+```
+
 <br>
 
 ## So many questions

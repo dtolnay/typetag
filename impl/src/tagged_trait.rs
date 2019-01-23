@@ -106,7 +106,14 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
                 let mut map = std::collections::BTreeMap::new();
                 let mut names = std::vec::Vec::new();
                 for registered in typetag::inventory::iter::<TypetagRegistration> {
-                    map.insert(registered.name, registered.deserializer);
+                    match map.entry(registered.name) {
+                        std::collections::btree_map::Entry::Vacant(entry) => {
+                            entry.insert(std::option::Option::Some(registered.deserializer));
+                        }
+                        std::collections::btree_map::Entry::Occupied(mut entry) => {
+                            entry.insert(std::option::Option::None);
+                        }
+                    }
                     names.push(registered.name);
                 }
                 names.sort_unstable();

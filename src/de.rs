@@ -19,7 +19,11 @@ impl<'de, 'a, T: ?Sized + 'static> Visitor<'de> for MapLookupVisitor<'a, T> {
         E: serde::de::Error,
     {
         match self.registry.map.get(key) {
-            Some(value) => Ok(*value),
+            Some(Some(value)) => Ok(*value),
+            Some(None) => Err(de::Error::custom(format_args!(
+                "non-unique tag of {}: {:?}",
+                self.expected, key
+            ))),
             None => Err(de::Error::unknown_variant(key, &self.registry.names)),
         }
     }

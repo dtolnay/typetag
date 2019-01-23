@@ -286,6 +286,6 @@ use std::collections::BTreeMap;
 // Not public API. Used by generated code.
 #[doc(hidden)]
 pub struct Registry<T: ?Sized> {
-    pub map: BTreeMap<&'static str, DeserializeFn<T>>,
+    pub map: BTreeMap<&'static str, Option<DeserializeFn<T>>>,
     pub names: Vec<&'static str>,
 }

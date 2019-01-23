@@ -3,3 +3,13 @@ name = "typetag"
 version = "0.0.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 edition = "2018"
+
+[workspace]
+members = ["impl"]
+
+[dependencies]
+erased-serde = "0.3"
+inventory = "0.1"
+lazy_static = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+typetag-impl = { version = "0.0", path = "impl" }

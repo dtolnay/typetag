@@ -189,6 +189,20 @@ impl WebEvent for Click {
 
   It might have been me.
 
+- *Then how does it work?*
+
+  We use the [`inventory`] crate to produce a registry of impls of your trait,
+  which is built on the [`ctor`] crate to hook up initialization functions that
+  insert into the registry. The first `Box<dyn Trait>` deserialization will
+  perform the work of iterating the registry and building a map of tags to
+  deserialization functions. Subsequent deserializations find the right
+  deserialization function in that map. The [`erased-serde`] crate is also
+  involved, to do this all in a way that does not break object safety.
+
+[`inventory`]: https://github.com/dtolnay/inventory
+[`ctor`]: https://github.com/mmastrac/rust-ctor
+[`erased-serde`]: https://github.com/dtolnay/erased-serde
+
 <br>
 
 #### License

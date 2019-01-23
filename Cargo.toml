@@ -2,6 +2,13 @@
 name = "typetag"
 version = "0.0.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "Serde serializable and deserializable trait objects"
+repository = "https://github.com/dtolnay/typetag"
+documentation = "https://docs.rs/typetag"
+keywords = ["serde"]
+categories = ["encoding"]
+readme = "README.md"
 edition = "2018"
 
 [workspace]

@@ -1,12 +1,16 @@
-use crate::TraitArgs;
+use crate::{Mode, TraitArgs};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{parse_quote, Ident, ItemTrait, LitStr};
+use syn::{parse_quote, Error, Ident, ItemTrait, LitStr};
 
-pub fn expand(args: TraitArgs, mut input: ItemTrait) -> TokenStream {
-    augment_trait(&mut input);
+pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> TokenStream {
+    if mode.de && !input.generics.params.is_empty() {
+        let msg = "deserialization of generic traits is not supported yet; \
+                   use #[typetag::serialize] to generate serialization only";
+        return Error::new_spanned(input.generics, msg).to_compile_error();
+    }
 
-    let registry = build_registry(&input);
+    augment_trait(&mut input, mode);
 
     let (serialize_impl, deserialize_impl) = match args {
         TraitArgs::External => externally_tagged(&input),
@@ -16,40 +20,58 @@ pub fn expand(args: TraitArgs, mut input: ItemTrait) -> TokenStream {
 
     let object = &input.ident;
 
-    let expanded = quote! {
-        #registry
+    let mut expanded = TokenStream::new();
 
-        impl<'a> typetag::serde::Serialize for dyn #object + 'a {
-            fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-            where
-                S: typetag::serde::Serializer,
-            {
-                #serialize_impl
-            }
-        }
+    if mode.ser {
+        let mut impl_generics = input.generics.clone();
+        impl_generics.params.push(parse_quote!('typetag));
+        let (impl_generics, _, _) = impl_generics.split_for_impl();
+        let (_, ty_generics, where_clause) = input.generics.split_for_impl();
 
-        impl<'de> typetag::serde::Deserialize<'de> for std::boxed::Box<dyn #object> {
-            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-            where
-                D: typetag::serde::Deserializer<'de>,
-            {
-                #deserialize_impl
+        expanded.extend(quote! {
+            impl #impl_generics typetag::serde::Serialize
+            for dyn #object #ty_generics + 'typetag #where_clause {
+                fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+                where
+                    S: typetag::serde::Serializer,
+                {
+                    #serialize_impl
+                }
             }
-        }
-    };
+        });
+    }
+
+    if mode.de {
+        let registry = build_registry(&input);
+
+        expanded.extend(quote! {
+            #registry
+
+            impl<'de> typetag::serde::Deserialize<'de> for std::boxed::Box<dyn #object> {
+                fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+                where
+                    D: typetag::serde::Deserializer<'de>,
+                {
+                    #deserialize_impl
+                }
+            }
+        });
+    }
 
     wrap_in_dummy_const(input, expanded)
 }
 
-fn augment_trait(input: &mut ItemTrait) {
-    input
-        .supertraits
-        .push(parse_quote!(typetag::erased_serde::Serialize));
+fn augment_trait(input: &mut ItemTrait, mode: Mode) {
+    if mode.ser {
+        input
+            .supertraits
+            .push(parse_quote!(typetag::erased_serde::Serialize));
 
-    input.items.push(parse_quote! {
-        #[doc(hidden)]
-        fn typetag_name(&self) -> &'static str;
-    });
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_name(&self) -> &'static str;
+        });
+    }
 }
 
 fn build_registry(input: &ItemTrait) -> TokenStream {

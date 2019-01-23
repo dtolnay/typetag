@@ -29,10 +29,6 @@ impl Parse for Input {
         let lookahead = input.lookahead1();
         if lookahead.peek(Token![trait]) {
             let mut item: ItemTrait = input.parse()?;
-            if !item.generics.params.is_empty() {
-                let msg = "generic traits are not supported yet";
-                return Err(Error::new_spanned(item.generics, msg));
-            }
             attrs.extend(item.attrs);
             item.attrs = attrs;
             Ok(Input::Trait(item))
@@ -44,10 +40,6 @@ impl Parse for Input {
                 let span = quote!(#impl_token #ty);
                 let msg = "expected impl Trait for Type";
                 return Err(Error::new_spanned(span, msg));
-            }
-            if !item.generics.params.is_empty() {
-                let msg = "generic impls are not supported yet";
-                return Err(Error::new_spanned(item.generics, msg));
             }
             attrs.extend(item.attrs);
             item.attrs = attrs;

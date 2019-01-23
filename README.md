@@ -13,7 +13,7 @@ Let's dive into the example and I'll explain some more below.
 
 ```toml
 [dependencies]
-typetag = "0.0"
+typetag = "0.1"
 ```
 
 *Supports rustc 1.31+*

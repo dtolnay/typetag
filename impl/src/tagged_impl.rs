@@ -10,9 +10,6 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         return Error::new_spanned(input.generics, msg).to_compile_error();
     }
 
-    let object = &input.trait_.as_ref().unwrap().1;
-    let this = &input.self_ty;
-
     let name = match args.name {
         Some(name) => quote!(#name),
         None => match type_name(&input.self_ty) {
@@ -24,13 +21,10 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         },
     };
 
-    if mode.ser {
-        input.items.push(parse_quote! {
-            fn typetag_name(&self) -> &'static str {
-                #name
-            }
-        });
-    }
+    augment_impl(&mut input, &name, mode);
+
+    let object = &input.trait_.as_ref().unwrap().1;
+    let this = &input.self_ty;
 
     let mut expanded = quote! {
         #input
@@ -53,6 +47,23 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
     }
 
     expanded
+}
+
+fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
+    if mode.ser {
+        input.items.push(parse_quote! {
+            fn typetag_name(&self) -> &'static str {
+                #name
+            }
+        });
+    }
+
+    if mode.de {
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_deserialize(&self) {}
+        });
+    }
 }
 
 fn type_name(ty: &Type) -> Option<String> {

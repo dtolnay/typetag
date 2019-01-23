@@ -72,6 +72,14 @@ fn augment_trait(input: &mut ItemTrait, mode: Mode) {
             fn typetag_name(&self) -> &'static str;
         });
     }
+
+    if mode.de {
+        // Only to catch missing typetag attribute on impl blocks. Not called.
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_deserialize(&self);
+        });
+    }
 }
 
 fn build_registry(input: &ItemTrait) -> TokenStream {

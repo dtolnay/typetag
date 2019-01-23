@@ -13,6 +13,8 @@
 //! ad-serving AI. Here are just the types and trait impls to start with:
 //!
 //! ```
+//! # use serde::{Serialize, Deserialize};
+//! #
 //! trait WebEvent {
 //!     fn inspect(&self);
 //! }
@@ -42,6 +44,24 @@
 //! We'll need to be able to send an arbitrary web event as JSON to the AI:
 //!
 //! ```
+//! # use serde::{Serialize, Serializer};
+//! # use serde_json::Result;
+//! #
+//! # trait WebEvent {}
+//! #
+//! # impl<'a> Serialize for dyn WebEvent + 'a {
+//! #     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+//! #     where
+//! #         S: Serializer,
+//! #     {
+//! #         unimplemented!()
+//! #     }
+//! # }
+//! #
+//! # fn somehow_send_json(json: String) -> Result<()> {
+//! #     unimplemented!()
+//! # }
+//! #
 //! fn send_event_to_money_factory(event: &dyn WebEvent) -> Result<()> {
 //!     let json = serde_json::to_string(event)?;
 //!     somehow_send_json(json)?;
@@ -52,6 +72,24 @@
 //! and receive an arbitrary web event as JSON on the server side:
 //!
 //! ```
+//! # use serde::{Deserialize, Deserializer};
+//! # use serde_json::Result;
+//! #
+//! # trait WebEvent {}
+//! #
+//! # impl<'de> Deserialize<'de> for Box<dyn WebEvent> {
+//! #     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+//! #     where
+//! #         D: Deserializer<'de>,
+//! #     {
+//! #         unimplemented!()
+//! #     }
+//! # }
+//! #
+//! # fn overanalyze(event: Box<dyn WebEvent>) -> Result<()> {
+//! #     unimplemented!()
+//! # }
+//! #
 //! fn process_event_from_clickfarm(json: &str) -> Result<()> {
 //!     let event: Box<dyn WebEvent> = serde_json::from_str(json)?;
 //!     overanalyze(event)?;
@@ -74,6 +112,22 @@
 //! Then stick a similar attribute on all those impl blocks too.
 //!
 //! ```
+//! # use serde::{Serialize, Deserialize};
+//! #
+//! # #[typetag::serde(tag = "type")]
+//! # trait WebEvent {
+//! #     fn inspect(&self);
+//! # }
+//! #
+//! # #[derive(Serialize, Deserialize)]
+//! # struct PageLoad;
+//! #
+//! # #[derive(Serialize, Deserialize)]
+//! # struct Click {
+//! #     x: i32,
+//! #     y: i32,
+//! # }
+//! #
 //! #[typetag::serde]
 //! impl WebEvent for PageLoad {
 //!     fn inspect(&self) {
@@ -141,6 +195,19 @@
 //! be the type name when no name is specified explicitly.
 //!
 //! ```
+//! # use serde::{Serialize, Deserialize};
+//! #
+//! # #[typetag::serde]
+//! # trait WebEvent {
+//! #     fn inspect(&self);
+//! # }
+//! #
+//! # #[derive(Serialize, Deserialize)]
+//! # struct Click {
+//! #     x: i32,
+//! #     y: i32,
+//! # }
+//! #
 //! #[typetag::serde(name = "mouse_button_down")]
 //! impl WebEvent for Click {
 //!     fn inspect(&self) {

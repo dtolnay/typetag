@@ -2,6 +2,10 @@
 name = "typetag-impl"
 version = "0.0.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "Implementation detail of the typetag crate"
+repository = "https://github.com/dtolnay/typetag"
+documentation = "https://docs.rs/typetag"
 edition = "2018"
 
 [lib]

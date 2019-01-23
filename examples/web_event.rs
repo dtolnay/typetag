@@ -1,3 +1,5 @@
+// cargo run --example web_event
+
 use serde::{Deserialize, Serialize};
 
 #[typetag::serde(tag = "type")]

@@ -338,3 +338,19 @@ pub struct Registry<T: ?Sized> {
     pub map: BTreeMap<&'static str, Option<DeserializeFn<T>>>,
     pub names: Vec<&'static str>,
 }
+
+// Object-safe trait bound inserted by typetag serialization. We want this just
+// so the serialization requirement appears on rustdoc's view of your trait.
+// Otherwise not public API.
+#[doc(hidden)]
+pub trait Serialize: erased_serde::Serialize {}
+
+impl<T: ?Sized> Serialize for T where T: erased_serde::Serialize {}
+
+// Object-safe trait bound inserted by typetag deserialization. We want this
+// just so the serialization requirement appears on rustdoc's view of your
+// trait. Otherwise not public API.
+#[doc(hidden)]
+pub trait Deserialize {}
+
+impl<T> Deserialize for T {}

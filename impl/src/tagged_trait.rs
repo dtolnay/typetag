@@ -63,9 +63,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
 fn augment_trait(input: &mut ItemTrait, mode: Mode) {
     if mode.ser {
-        input
-            .supertraits
-            .push(parse_quote!(typetag::erased_serde::Serialize));
+        input.supertraits.push(parse_quote!(typetag::Serialize));
 
         input.items.push(parse_quote! {
             #[doc(hidden)]
@@ -74,6 +72,8 @@ fn augment_trait(input: &mut ItemTrait, mode: Mode) {
     }
 
     if mode.de {
+        input.supertraits.push(parse_quote!(typetag::Deserialize));
+
         // Only to catch missing typetag attribute on impl blocks. Not called.
         input.items.push(parse_quote! {
             #[doc(hidden)]

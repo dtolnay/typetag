@@ -1,6 +1,6 @@
 use quote::quote;
 use syn::parse::{Parse, ParseStream, Result};
-use syn::{Attribute, Error, ItemImpl, ItemTrait, LitStr, Token};
+use syn::{Attribute, Error, ItemImpl, ItemTrait, LitStr, Token, Visibility};
 
 mod kw {
     syn::custom_keyword!(tag);
@@ -26,13 +26,17 @@ pub enum Input {
 impl Parse for Input {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut attrs = Attribute::parse_outer(input)?;
-        let lookahead = input.lookahead1();
-        if lookahead.peek(Token![trait]) {
+
+        let ahead = input.fork();
+        ahead.parse::<Visibility>()?;
+        ahead.parse::<Option<Token![unsafe]>>()?;
+
+        if ahead.peek(Token![trait]) {
             let mut item: ItemTrait = input.parse()?;
             attrs.extend(item.attrs);
             item.attrs = attrs;
             Ok(Input::Trait(item))
-        } else if lookahead.peek(Token![impl ]) {
+        } else if ahead.peek(Token![impl ]) {
             let mut item: ItemImpl = input.parse()?;
             if item.trait_.is_none() {
                 let impl_token = item.impl_token;
@@ -45,7 +49,7 @@ impl Parse for Input {
             item.attrs = attrs;
             Ok(Input::Impl(item))
         } else {
-            Err(lookahead.error())
+            Err(input.error("expected trait or impl block"))
         }
     }
 }

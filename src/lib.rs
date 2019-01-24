@@ -6,6 +6,8 @@
 //!
 //! Let's dive into the example and I'll explain some more below.
 //!
+//! <br>
+//!
 //! # Example
 //!
 //! Suppose I have a trait `WebEvent` and I require that every implementation of
@@ -145,6 +147,8 @@
 //!
 //! And now it works as described. All in all, three lines were added!
 //!
+//! <br>
+//!
 //! # What?
 //!
 //! Trait objects are serialized by this library like Serde enums. Every impl of
@@ -243,6 +247,8 @@
 //!     /* ... */
 //! }
 //! ```
+//!
+//! <br>
 //!
 //! # So many questions
 //!

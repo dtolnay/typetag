@@ -176,6 +176,7 @@ yourself and implemented Serialize and Deserialize for the dyn Trait object in
 terms of the enum.
 
 ```rust
+// generated (conceptually)
 #[derive(Serialize, Deserialize)]
 enum WebEvent {
     PageLoad(PageLoad),

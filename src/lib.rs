@@ -220,6 +220,30 @@
 //! {"type":"mouse_button_down","x":10,"y":10}
 //! ```
 //!
+//! Conceptually all you're getting with this crate is that we build for you an
+//! enum in which every impl of the trait in your program is automatically
+//! registered as an enum variant. The behavior is the same as if you had
+//! written the enum yourself and implemented Serialize and Deserialize for the
+//! dyn Trait object in terms of the enum.
+//!
+//! ```
+//! # use serde::{Serialize, Deserialize};
+//! #
+//! # #[derive(Serialize, Deserialize)]
+//! # struct PageLoad;
+//! #
+//! # #[derive(Serialize, Deserialize)]
+//! # struct Click;
+//! #
+//! // generated (conceptually)
+//! #[derive(Serialize, Deserialize)]
+//! enum WebEvent {
+//!     PageLoad(PageLoad),
+//!     Click(Click),
+//!     /* ... */
+//! }
+//! ```
+//!
 //! # So many questions
 //!
 //! - *Does it work if the trait impls are spread across different crates?*

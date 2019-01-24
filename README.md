@@ -169,6 +169,21 @@ impl WebEvent for Click {
 {"type":"mouse_button_down","x":10,"y":10}
 ```
 
+Conceptually all you're getting with this crate is that we build for you an enum
+in which every impl of the trait in your program is automatically registered as
+an enum variant. The behavior is the same as if you had written the enum
+yourself and implemented Serialize and Deserialize for the dyn Trait object in
+terms of the enum.
+
+```rust
+#[derive(Serialize, Deserialize)]
+enum WebEvent {
+    PageLoad(PageLoad),
+    Click(Click),
+    /* ... */
+}
+```
+
 <br>
 
 ## So many questions

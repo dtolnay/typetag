@@ -36,7 +36,7 @@ impl Parse for Input {
             attrs.extend(item.attrs);
             item.attrs = attrs;
             Ok(Input::Trait(item))
-        } else if ahead.peek(Token![impl ]) {
+        } else if ahead.peek(Token![impl]) {
             let mut item: ItemImpl = input.parse()?;
             if item.trait_.is_none() {
                 let impl_token = item.impl_token;

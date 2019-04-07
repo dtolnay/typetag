@@ -168,3 +168,20 @@ mod adjacently_tagged {
         trait_object.assert_a_is_11();
     }
 }
+
+mod marker_traits {
+    use serde::Serialize;
+
+    #[typetag::serde]
+    trait Trait {}
+
+    fn assert_serialize<T: ?Sized + Serialize>() {}
+
+    #[test]
+    fn test_serialize() {
+        assert_serialize::<dyn Trait>();
+        assert_serialize::<dyn Trait + Send>();
+        assert_serialize::<dyn Trait + Sync>();
+        assert_serialize::<dyn Trait + Send + Sync>();
+    }
+}

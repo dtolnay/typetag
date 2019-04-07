@@ -39,6 +39,20 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
                 }
             }
         });
+
+        for marker_traits in &[quote!(Send), quote!(Sync), quote!(Send + Sync)] {
+            expanded.extend(quote! {
+                impl #impl_generics typetag::serde::Serialize
+                for dyn #object #ty_generics + #marker_traits + 'typetag #where_clause {
+                    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+                    where
+                        S: typetag::serde::Serializer,
+                    {
+                        typetag::serde::Serialize::serialize(self as &dyn #object #ty_generics, serializer)
+                    }
+                }
+            });
+        }
     }
 
     if mode.de {

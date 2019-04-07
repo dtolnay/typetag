@@ -237,3 +237,8 @@ mod marker_traits {
         assert_deserialize::<dyn Both + Send + Sync>();
     }
 }
+
+mod generic {
+    #[typetag::serialize]
+    trait Generic<T> {}
+}

@@ -354,3 +354,9 @@ impl<T: ?Sized> Serialize for T where T: erased_serde::Serialize {}
 pub trait Deserialize {}
 
 impl<T> Deserialize for T {}
+
+// Not public API.
+#[doc(hidden)]
+pub trait Strictest {
+    type Object: ?Sized;
+}

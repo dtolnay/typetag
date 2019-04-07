@@ -170,18 +170,70 @@ mod adjacently_tagged {
 }
 
 mod marker_traits {
+    use serde::de::DeserializeOwned;
     use serde::Serialize;
 
     #[typetag::serde]
-    trait Trait {}
+    trait Neither {}
 
-    fn assert_serialize<T: ?Sized + Serialize>() {}
+    #[typetag::serde]
+    trait Sendable: Send {}
+
+    #[typetag::serde]
+    trait Syncable: Sync {}
+
+    #[typetag::serde]
+    trait Both: Send + Sync {}
+
+    fn assert_serialize<T>()
+    where
+        T: ?Sized + Serialize,
+    {
+    }
+
+    fn assert_deserialize<T>()
+    where
+        T: ?Sized,
+        Box<T>: DeserializeOwned,
+    {
+    }
 
     #[test]
     fn test_serialize() {
-        assert_serialize::<dyn Trait>();
-        assert_serialize::<dyn Trait + Send>();
-        assert_serialize::<dyn Trait + Sync>();
-        assert_serialize::<dyn Trait + Send + Sync>();
+        assert_serialize::<dyn Neither>();
+        assert_serialize::<dyn Neither + Send>();
+        assert_serialize::<dyn Neither + Sync>();
+        assert_serialize::<dyn Neither + Send + Sync>();
+
+        assert_serialize::<dyn Sendable>();
+        assert_serialize::<dyn Sendable + Send>();
+        assert_serialize::<dyn Sendable + Sync>();
+        assert_serialize::<dyn Sendable + Send + Sync>();
+
+        assert_serialize::<dyn Syncable>();
+        assert_serialize::<dyn Syncable + Send>();
+        assert_serialize::<dyn Syncable + Sync>();
+        assert_serialize::<dyn Syncable + Send + Sync>();
+
+        assert_serialize::<dyn Both>();
+        assert_serialize::<dyn Both + Send>();
+        assert_serialize::<dyn Both + Sync>();
+        assert_serialize::<dyn Both + Send + Sync>();
+    }
+
+    #[test]
+    fn deserialize() {
+        assert_deserialize::<dyn Neither>();
+
+        assert_deserialize::<dyn Sendable>();
+        assert_deserialize::<dyn Sendable + Send>();
+
+        assert_deserialize::<dyn Syncable>();
+        assert_deserialize::<dyn Syncable + Sync>();
+
+        assert_deserialize::<dyn Both>();
+        assert_deserialize::<dyn Both + Send>();
+        assert_deserialize::<dyn Both + Sync>();
+        assert_deserialize::<dyn Both + Send + Sync>();
     }
 }

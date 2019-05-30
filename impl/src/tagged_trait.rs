@@ -143,6 +143,7 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
         typetag::inventory::collect!(TypetagRegistration);
 
         impl dyn #object {
+            #[doc(hidden)]
             pub fn typetag_register(name: &'static str, deserializer: TypetagFn) -> TypetagRegistration {
                 TypetagRegistration { name, deserializer }
             }

@@ -52,6 +52,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
 fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
     if mode.ser {
         input.items.push(parse_quote! {
+            #[doc(hidden)]
             fn typetag_name(&self) -> &'static str {
                 #name
             }

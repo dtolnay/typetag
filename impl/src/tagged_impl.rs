@@ -70,7 +70,7 @@ fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
 fn type_name(ty: &Type) -> Option<String> {
     match ty {
         Type::Path(TypePath { qself: None, path }) => {
-            Some(path.segments.last().unwrap().into_value().ident.to_string())
+            Some(path.segments.last().unwrap().ident.to_string())
         }
         _ => None,
     }

@@ -328,7 +328,7 @@ mod ser;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
-pub type DeserializeFn<T> = fn(&mut erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;
+pub type DeserializeFn<T> = fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;
 
 use std::collections::BTreeMap;
 

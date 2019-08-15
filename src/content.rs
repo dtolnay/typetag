@@ -309,7 +309,7 @@ impl<'de, E> ContentDeserializer<'de, E>
 where
     E: de::Error,
 {
-    fn invalid_type(self, exp: &Expected) -> E {
+    fn invalid_type(self, exp: &dyn Expected) -> E {
         de::Error::invalid_type(self.content.unexpected(), exp)
     }
 

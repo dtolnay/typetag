@@ -3,7 +3,7 @@ use serde::de::{self, DeserializeSeed, Deserializer, Expected, Visitor};
 use std::fmt;
 
 pub struct MapLookupVisitor<'a, T: ?Sized + 'static> {
-    pub expected: &'a Expected,
+    pub expected: &'a dyn Expected,
     pub registry: &'static Registry<T>,
 }
 

@@ -41,7 +41,7 @@ mod externally_tagged {
 
     #[test]
     fn test_json_serialize() {
-        let trait_object = &A { a: 11 } as &Trait;
+        let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"A":{"a":11}}"#;
         assert_eq!(json, expected);
@@ -50,15 +50,15 @@ mod externally_tagged {
     #[test]
     fn test_json_deserialize() {
         let json = r#"{"B":{"b":11}}"#;
-        let trait_object: Box<Trait> = serde_json::from_str(json).unwrap();
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
     }
 
     #[test]
     fn test_bincode_round_trip() {
-        let trait_object = &A { a: 11 } as &Trait;
+        let trait_object = &A { a: 11 } as &dyn Trait;
         let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<Trait> = bincode::deserialize(&bytes).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
         trait_object.assert_a_is_11();
     }
 }
@@ -94,7 +94,7 @@ mod internally_tagged {
 
     #[test]
     fn test_json_serialize() {
-        let trait_object = &A { a: 11 } as &Trait;
+        let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"type":"A","a":11}"#;
         assert_eq!(json, expected);
@@ -103,15 +103,15 @@ mod internally_tagged {
     #[test]
     fn test_json_deserialize() {
         let json = r#"{"type":"B","b":11}"#;
-        let trait_object: Box<Trait> = serde_json::from_str(json).unwrap();
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
     }
 
     #[test]
     fn test_bincode_round_trip() {
-        let trait_object = &A { a: 11 } as &Trait;
+        let trait_object = &A { a: 11 } as &dyn Trait;
         let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<Trait> = bincode::deserialize(&bytes).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
         trait_object.assert_a_is_11();
     }
 }
@@ -147,7 +147,7 @@ mod adjacently_tagged {
 
     #[test]
     fn test_json_serialize() {
-        let trait_object = &A { a: 11 } as &Trait;
+        let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"type":"A","content":{"a":11}}"#;
         assert_eq!(json, expected);
@@ -156,15 +156,15 @@ mod adjacently_tagged {
     #[test]
     fn test_json_deserialize() {
         let json = r#"{"type":"B","content":{"b":11}}"#;
-        let trait_object: Box<Trait> = serde_json::from_str(json).unwrap();
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
     }
 
     #[test]
     fn test_bincode_round_trip() {
-        let trait_object = &A { a: 11 } as &Trait;
+        let trait_object = &A { a: 11 } as &dyn Trait;
         let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<Trait> = bincode::deserialize(&bytes).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
         trait_object.assert_a_is_11();
     }
 }

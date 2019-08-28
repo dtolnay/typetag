@@ -275,16 +275,15 @@
 //!
 //! - *Then how does it work?*
 //!
-//!   We use the [`inventory`] crate to produce a registry of impls of your
-//!   trait, which is built on the [`ctor`] crate to hook up initialization
-//!   functions that insert into the registry. The first `Box<dyn Trait>`
-//!   deserialization will perform the work of iterating the registry and
-//!   building a map of tags to deserialization functions. Subsequent
-//!   deserializations find the right deserialization function in that map. The
-//!   [`erased-serde`] crate is also involved, to do this all in a way that does
-//!   not break object safety.
+//!   We use the [`linkme`] crate to produce a registry of impls of your
+//!   trait, collected by the linker into a contiguous section in the binary.
+//!   The first `Box<dyn Trait>` deserialization will perform the work of
+//!   iterating the registry and building a map of tags to deserialization
+//!   functions. Subsequent deserializations find the right deserialization
+//!   function in that map. The [`erased-serde`] crate is also involved, to do
+//!   this all in a way that does not break object safety.
 //!
-//! [`inventory`]: https://github.com/dtolnay/inventory
+//! [`linkme`]: https://github.com/dtolnay/linkme
 //! [`ctor`]: https://github.com/mmastrac/rust-ctor
 //! [`erased-serde`]: https://github.com/dtolnay/erased-serde
 
@@ -293,7 +292,7 @@ pub use typetag_impl::*;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
-pub use inventory;
+pub use linkme;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]

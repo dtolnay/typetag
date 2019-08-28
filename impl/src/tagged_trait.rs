@@ -30,7 +30,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
         expanded.extend(quote! {
             impl #impl_generics typetag::serde::Serialize
-            for dyn #object #ty_generics + 'typetag #where_clause {
+            for dyn super::#object #ty_generics + 'typetag #where_clause {
                 fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
                 where
                     S: typetag::serde::Serializer,
@@ -43,12 +43,12 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
         for marker_traits in &[quote!(Send), quote!(Sync), quote!(Send + Sync)] {
             expanded.extend(quote! {
                 impl #impl_generics typetag::serde::Serialize
-                for dyn #object #ty_generics + #marker_traits + 'typetag #where_clause {
+                for dyn super::#object #ty_generics + #marker_traits + 'typetag #where_clause {
                     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
                     where
                         S: typetag::serde::Serializer,
                     {
-                        typetag::serde::Serialize::serialize(self as &dyn #object #ty_generics, serializer)
+                        typetag::serde::Serialize::serialize(self as &dyn super::#object #ty_generics, serializer)
                     }
                 }
             });
@@ -73,11 +73,11 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
         expanded.extend(quote! {
             #registry
 
-            impl typetag::Strictest for dyn #object {
-                type Object = dyn #object + #strictest;
+            impl typetag::Strictest for dyn super::#object {
+                type Object = dyn super::#object + #strictest;
             }
 
-            impl<'de> typetag::serde::Deserialize<'de> for std::boxed::Box<dyn #object + #strictest> {
+            impl<'de> typetag::serde::Deserialize<'de> for std::boxed::Box<dyn super::#object + #strictest> {
                 fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
                 where
                     D: typetag::serde::Deserializer<'de>,
@@ -89,13 +89,13 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
         for marker_traits in others {
             expanded.extend(quote! {
-                impl<'de> typetag::serde::Deserialize<'de> for std::boxed::Box<dyn #object + #marker_traits> {
+                impl<'de> typetag::serde::Deserialize<'de> for std::boxed::Box<dyn super::#object + #marker_traits> {
                     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
                     where
                         D: typetag::serde::Deserializer<'de>,
                     {
                         std::result::Result::Ok(
-                            <std::boxed::Box<dyn #object + #strictest>
+                            <std::boxed::Box<dyn super::#object + #strictest>
                                 as typetag::serde::Deserialize<'de>>::deserialize(deserializer)?
                         )
                     }
@@ -130,9 +130,12 @@ fn augment_trait(input: &mut ItemTrait, mode: Mode) {
 
 fn build_registry(input: &ItemTrait) -> TokenStream {
     let object = &input.ident;
+    let mut typetag_registration_static = format!("{}_TYPETAG_REGISTRATIONS", object);
+    typetag_registration_static.make_ascii_uppercase();
+    let typetag_registration_static = &Ident::new(&typetag_registration_static, Span::call_site());
 
     quote! {
-        type TypetagStrictest = <dyn #object as typetag::Strictest>::Object;
+        type TypetagStrictest = <dyn super::#object as typetag::Strictest>::Object;
         type TypetagFn = typetag::DeserializeFn<TypetagStrictest>;
 
         pub struct TypetagRegistration {
@@ -140,9 +143,10 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
             deserializer: TypetagFn,
         }
 
-        typetag::inventory::collect!(TypetagRegistration);
+        #[typetag::linkme::distributed_slice]
+        pub static #typetag_registration_static: [fn() -> TypetagRegistration] = [..];
 
-        impl dyn #object {
+        impl dyn super::#object {
             #[doc(hidden)]
             pub fn typetag_register(name: &'static str, deserializer: TypetagFn) -> TypetagRegistration {
                 TypetagRegistration { name, deserializer }
@@ -153,7 +157,8 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
             static ref TYPETAG: typetag::Registry<TypetagStrictest> = {
                 let mut map = std::collections::BTreeMap::new();
                 let mut names = std::vec::Vec::new();
-                for registered in typetag::inventory::iter::<TypetagRegistration> {
+                for registered_fn in #typetag_registration_static.iter() {
+                    let registered = registered_fn();
                     match map.entry(registered.name) {
                         std::collections::btree_map::Entry::Vacant(entry) => {
                             entry.insert(std::option::Option::Some(registered.deserializer));
@@ -241,8 +246,9 @@ fn wrap_in_dummy_const(input: ItemTrait, expanded: TokenStream) -> TokenStream {
         #input
 
         #[allow(non_upper_case_globals)]
-        const #dummy_const: () = {
+        #[macro_use]
+        mod #dummy_const {
             #expanded
-        };
+        }
     }
 }

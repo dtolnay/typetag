@@ -14,9 +14,6 @@ edition = "2018"
 [workspace]
 members = ["impl"]
 
-[badges]
-travis-ci = { repository = "dtolnay/typetag" }
-
 [dependencies]
 erased-serde = "0.3"
 inventory = "0.1"

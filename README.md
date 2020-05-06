@@ -1,6 +1,6 @@
 # Typetag
 
-[![Build Status](https://api.travis-ci.com/dtolnay/typetag.svg?branch=master)](https://travis-ci.com/dtolnay/typetag)
+[![Build Status](https://img.shields.io/github/workflow/status/dtolnay/typetag/CI/master)](https://github.com/dtolnay/typetag/actions?query=branch%3Amaster)
 [![Latest Version](https://img.shields.io/crates/v/typetag.svg)](https://crates.io/crates/typetag)
 [![Rust Documentation](https://img.shields.io/badge/api-rustdoc-blue.svg)](https://docs.rs/typetag)
 

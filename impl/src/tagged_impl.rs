@@ -67,11 +67,16 @@ fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
     }
 }
 
-fn type_name(ty: &Type) -> Option<String> {
-    match ty {
-        Type::Path(TypePath { qself: None, path }) => {
-            Some(path.segments.last().unwrap().ident.to_string())
+fn type_name(mut ty: &Type) -> Option<String> {
+    loop {
+        match ty {
+            Type::Path(TypePath { qself: None, path }) => {
+                return Some(path.segments.last().unwrap().ident.to_string());
+            }
+            Type::Group(group) => {
+                ty = &group.elem;
+            }
+            _ => return None,
         }
-        _ => None,
     }
 }

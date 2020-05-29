@@ -242,3 +242,19 @@ mod generic {
     #[typetag::serialize]
     trait Generic<T> {}
 }
+
+mod macro_expanded {
+    use super::A;
+
+    #[typetag::serde]
+    trait Trait {}
+
+    macro_rules! impl_trait {
+        ($ty:ty) => {
+            #[typetag::serde]
+            impl Trait for $ty {}
+        };
+    }
+
+    impl_trait!(A);
+}

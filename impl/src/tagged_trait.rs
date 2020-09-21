@@ -172,30 +172,34 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
 }
 
 fn externally_tagged(input: &ItemTrait) -> (TokenStream, TokenStream) {
-    let trait_object = input.ident.to_string();
+    let object = &input.ident;
+    let object_name = object.to_string();
+    let (_, ty_generics, _) = input.generics.split_for_impl();
 
     let serialize_impl = quote! {
-        let name = Self::typetag_name(self);
+        let name = <Self as #object #ty_generics>::typetag_name(self);
         typetag::externally::serialize(serializer, name, self)
     };
 
     let deserialize_impl = quote! {
-        typetag::externally::deserialize(deserializer, #trait_object, &TYPETAG)
+        typetag::externally::deserialize(deserializer, #object_name, &TYPETAG)
     };
 
     (serialize_impl, deserialize_impl)
 }
 
 fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStream) {
-    let trait_object = input.ident.to_string();
+    let object = &input.ident;
+    let object_name = object.to_string();
+    let (_, ty_generics, _) = input.generics.split_for_impl();
 
     let serialize_impl = quote! {
-        let name = Self::typetag_name(self);
+        let name = <Self as #object #ty_generics>::typetag_name(self);
         typetag::internally::serialize(serializer, #tag, name, self)
     };
 
     let deserialize_impl = quote! {
-        typetag::internally::deserialize(deserializer, #trait_object, #tag, &TYPETAG)
+        typetag::internally::deserialize(deserializer, #object_name, #tag, &TYPETAG)
     };
 
     (serialize_impl, deserialize_impl)
@@ -206,15 +210,17 @@ fn adjacently_tagged(
     content: LitStr,
     input: &ItemTrait,
 ) -> (TokenStream, TokenStream) {
-    let trait_object = input.ident.to_string();
+    let object = &input.ident;
+    let object_name = object.to_string();
+    let (_, ty_generics, _) = input.generics.split_for_impl();
 
     let serialize_impl = quote! {
-        let name = Self::typetag_name(self);
-        typetag::adjacently::serialize(serializer, #trait_object, #tag, name, #content, self)
+        let name = <Self as #object #ty_generics>::typetag_name(self);
+        typetag::adjacently::serialize(serializer, #object_name, #tag, name, #content, self)
     };
 
     let deserialize_impl = quote! {
-        typetag::adjacently::deserialize(deserializer, #trait_object, &[#tag, #content], &TYPETAG)
+        typetag::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], &TYPETAG)
     };
 
     (serialize_impl, deserialize_impl)

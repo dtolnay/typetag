@@ -258,3 +258,29 @@ mod macro_expanded {
 
     impl_trait!(A);
 }
+
+// https://github.com/dtolnay/typetag/issues/28
+mod trait_hierarchy {
+    use serde::{Deserialize, Serialize};
+
+    #[typetag::serde]
+    pub trait Base {}
+
+    #[derive(Serialize, Deserialize)]
+    struct SomeBase;
+
+    #[typetag::serde]
+    impl Base for SomeBase {}
+
+    #[typetag::serde]
+    pub trait Derived: Base {}
+
+    #[derive(Serialize, Deserialize)]
+    struct SomeDerived;
+
+    #[typetag::serde]
+    impl Base for SomeDerived {}
+
+    #[typetag::serde]
+    impl Derived for SomeDerived {}
+}

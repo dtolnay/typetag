@@ -1,4 +1,5 @@
 #![recursion_limit = "256"]
+#![allow(clippy::needless_pass_by_value, clippy::single_match_else)]
 
 extern crate proc_macro;
 

@@ -843,7 +843,7 @@ where
                 other.unexpected(),
                 &"struct variant",
             )),
-            _ => Err(de::Error::invalid_type(
+            None => Err(de::Error::invalid_type(
                 Unexpected::UnitVariant,
                 &"struct variant",
             )),

@@ -1,6 +1,6 @@
 [package]
 name = "typetag"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "Serde serializable and deserializable trait objects"
@@ -19,7 +19,7 @@ erased-serde = "0.3"
 inventory = "0.1"
 lazy_static = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-typetag-impl = { version = "=0.1.6", path = "impl" }
+typetag-impl = { version = "=0.1.7", path = "impl" }
 
 [dev-dependencies]
 bincode = "1.0"

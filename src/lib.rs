@@ -296,7 +296,11 @@
 //! [`ctor`]: https://github.com/mmastrac/rust-ctor
 //! [`erased-serde`]: https://github.com/dtolnay/erased-serde
 
-#![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
+#![allow(
+    clippy::missing_errors_doc,
+    clippy::module_name_repetitions,
+    clippy::unnested_or_patterns
+)]
 
 #[doc(hidden)]
 pub use typetag_impl::*;

@@ -39,8 +39,23 @@ mod externally_tagged {
         }
     }
 
+    cfg_if::cfg_if! {
+        if #[cfg(feature="runtime")] {
+            static REGISTER_ONCE: std::sync::Once = std::sync::Once::new();
+            fn register_all() {
+                REGISTER_ONCE.call_once(|| {
+                    <A as Trait>::register();
+                    <B as Trait>::register();
+                });
+            }
+        } else {
+            fn register_all() {}
+        }
+    }
+
     #[test]
     fn test_json_serialize() {
+        register_all();
         let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"A":{"a":11}}"#;
@@ -49,6 +64,7 @@ mod externally_tagged {
 
     #[test]
     fn test_json_deserialize() {
+        register_all();
         let json = r#"{"B":{"b":11}}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
@@ -56,6 +72,7 @@ mod externally_tagged {
 
     #[test]
     fn test_bincode_round_trip() {
+        register_all();
         let trait_object = &A { a: 11 } as &dyn Trait;
         let bytes = bincode::serialize(trait_object).unwrap();
         let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
@@ -92,8 +109,23 @@ mod internally_tagged {
         }
     }
 
+    cfg_if::cfg_if! {
+        if #[cfg(feature="runtime")] {
+            static REGISTER_ONCE: std::sync::Once = std::sync::Once::new();
+            fn register_all() {
+                REGISTER_ONCE.call_once(|| {
+                    <A as Trait>::register();
+                    <B as Trait>::register();
+                });
+            }
+        } else {
+            fn register_all() {}
+        }
+    }
+
     #[test]
     fn test_json_serialize() {
+        register_all();
         let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"type":"A","a":11}"#;
@@ -102,6 +134,7 @@ mod internally_tagged {
 
     #[test]
     fn test_json_deserialize() {
+        register_all();
         let json = r#"{"type":"B","b":11}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
@@ -109,6 +142,7 @@ mod internally_tagged {
 
     #[test]
     fn test_bincode_round_trip() {
+        register_all();
         let trait_object = &A { a: 11 } as &dyn Trait;
         let bytes = bincode::serialize(trait_object).unwrap();
         let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
@@ -145,8 +179,23 @@ mod adjacently_tagged {
         }
     }
 
+    cfg_if::cfg_if! {
+        if #[cfg(feature="runtime")] {
+            static REGISTER_ONCE: std::sync::Once = std::sync::Once::new();
+            fn register_all() {
+                REGISTER_ONCE.call_once(|| {
+                    <A as Trait>::register();
+                    <B as Trait>::register();
+                });
+            }
+        } else {
+            fn register_all() {}
+        }
+    }
+
     #[test]
     fn test_json_serialize() {
+        register_all();
         let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"type":"A","content":{"a":11}}"#;
@@ -155,6 +204,7 @@ mod adjacently_tagged {
 
     #[test]
     fn test_json_deserialize() {
+        register_all();
         let json = r#"{"type":"B","content":{"b":11}}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
@@ -162,6 +212,7 @@ mod adjacently_tagged {
 
     #[test]
     fn test_bincode_round_trip() {
+        register_all();
         let trait_object = &A { a: 11 } as &dyn Trait;
         let bytes = bincode::serialize(trait_object).unwrap();
         let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();

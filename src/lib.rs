@@ -306,6 +306,7 @@
 pub use typetag_impl::*;
 
 // Not public API. Used by generated code.
+#[cfg(feature="inventory")]
 #[doc(hidden)]
 pub use inventory;
 
@@ -336,6 +337,10 @@ pub mod internally;
 #[doc(hidden)]
 pub mod adjacently;
 
+// Not public API. Used by generated code.
+#[doc(hidden)]
+pub mod registry;
+
 mod content;
 mod de;
 mod ser;
@@ -344,14 +349,9 @@ mod ser;
 #[doc(hidden)]
 pub type DeserializeFn<T> = fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;
 
-use std::collections::BTreeMap;
-
 // Not public API. Used by generated code.
 #[doc(hidden)]
-pub struct Registry<T: ?Sized> {
-    pub map: BTreeMap<&'static str, Option<DeserializeFn<T>>>,
-    pub names: Vec<&'static str>,
-}
+pub use registry::*;
 
 // Object-safe trait bound inserted by typetag serialization. We want this just
 // so the serialization requirement appears on rustdoc's view of your trait.

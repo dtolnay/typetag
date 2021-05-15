@@ -11,12 +11,17 @@ categories = ["encoding"]
 readme = "README.md"
 edition = "2018"
 
+[features]
+default = ["inventory"]
+runtime = ["typetag-impl/runtime"]
+
 [workspace]
 members = ["impl"]
 
 [dependencies]
+cfg-if = "1.0.0"
 erased-serde = "0.3"
-inventory = "0.1"
+inventory = { version = "0.1", optional = true }
 lazy_static = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 typetag-impl = { version = "=0.1.7", path = "impl" }

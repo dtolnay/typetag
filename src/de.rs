@@ -1,4 +1,4 @@
-use crate::{DeserializeFn, Registry};
+use crate::{DeserializeFn, DeserializerRegistry, Registry};
 use serde::de::{self, DeserializeSeed, Deserializer, Expected, Visitor};
 use std::fmt;
 
@@ -18,14 +18,7 @@ impl<'de, 'a, T: ?Sized + 'static> Visitor<'de> for MapLookupVisitor<'a, T> {
     where
         E: serde::de::Error,
     {
-        match self.registry.map.get(key) {
-            Some(Some(value)) => Ok(*value),
-            Some(None) => Err(de::Error::custom(format_args!(
-                "non-unique tag of {}: {:?}",
-                self.expected, key
-            ))),
-            None => Err(de::Error::unknown_variant(key, &self.registry.names)),
-        }
+        self.registry.get_deserializer(key, self.expected)
     }
 }
 

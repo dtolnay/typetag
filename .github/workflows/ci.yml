@@ -35,5 +35,4 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v2
-        # https://github.com/dtolnay/typetag/issues/41
-      - run: cargo outdated --exit-code 1 --ignore inventory
+      - run: cargo outdated --exit-code 1

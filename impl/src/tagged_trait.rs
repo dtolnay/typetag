@@ -136,16 +136,16 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
         type TypetagStrictest = <dyn #object as typetag::Strictest>::Object;
         type TypetagFn = typetag::DeserializeFn<TypetagStrictest>;
 
-        #vis struct TypetagRegistration {
+        #vis struct TypetagRegistration<T> {
             name: &'static str,
-            deserializer: TypetagFn,
+            deserializer: T,
         }
 
-        typetag::inventory::collect!(TypetagRegistration);
+        typetag::inventory::collect!(TypetagRegistration<TypetagFn>);
 
         impl dyn #object {
             #[doc(hidden)]
-            #vis fn typetag_register(name: &'static str, deserializer: TypetagFn) -> TypetagRegistration {
+            #vis const fn typetag_register<T>(name: &'static str, deserializer: T) -> TypetagRegistration<T> {
                 TypetagRegistration { name, deserializer }
             }
         }
@@ -154,7 +154,7 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
             static ref TYPETAG: typetag::Registry<TypetagStrictest> = {
                 let mut map = std::collections::BTreeMap::new();
                 let mut names = std::vec::Vec::new();
-                for registered in typetag::inventory::iter::<TypetagRegistration> {
+                for registered in typetag::inventory::iter::<TypetagRegistration<TypetagFn>> {
                     match map.entry(registered.name) {
                         std::collections::btree_map::Entry::Vacant(entry) => {
                             entry.insert(std::option::Option::Some(registered.deserializer));

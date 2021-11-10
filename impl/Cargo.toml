@@ -1,6 +1,6 @@
 [package]
 name = "typetag-impl"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "Implementation detail of the typetag crate"

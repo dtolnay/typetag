@@ -12,21 +12,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [nightly, beta, stable, 1.34.0]
+        rust: [nightly, beta, stable, 1.37.0]
     steps:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.rust}}
       - run: cargo test
-
-  msrv:
-    name: Rust 1.32.0
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: dtolnay/rust-toolchain@1.32.0
-      - run: cargo check
 
   clippy:
     name: Clippy

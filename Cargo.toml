@@ -10,7 +10,7 @@ keywords = ["serde"]
 categories = ["encoding"]
 readme = "README.md"
 edition = "2018"
-rust-version = "1.31"
+rust-version = "1.32"
 
 [workspace]
 members = ["impl"]

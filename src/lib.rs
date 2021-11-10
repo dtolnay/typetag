@@ -314,11 +314,8 @@ pub use inventory;
 pub use erased_serde;
 
 // Not public API. Used by generated code.
-//
-// Extern crate because on Rust 1.31 a plain `use` would conflict with the
-// `serde` attribute macro re-exported from typetag_impl.
 #[doc(hidden)]
-pub extern crate serde;
+pub use serde;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]

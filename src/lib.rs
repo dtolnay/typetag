@@ -319,7 +319,7 @@ pub use serde;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
-pub use lazy_static;
+pub use once_cell;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]

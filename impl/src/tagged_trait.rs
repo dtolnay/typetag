@@ -129,13 +129,14 @@ fn augment_trait(input: &mut ItemTrait, mode: Mode) {
 }
 
 fn build_registry(input: &ItemTrait) -> TokenStream {
+    let vis = &input.vis;
     let object = &input.ident;
 
     quote! {
         type TypetagStrictest = <dyn #object as typetag::Strictest>::Object;
         type TypetagFn = typetag::DeserializeFn<TypetagStrictest>;
 
-        pub struct TypetagRegistration {
+        #vis struct TypetagRegistration {
             name: &'static str,
             deserializer: TypetagFn,
         }
@@ -144,7 +145,7 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
 
         impl dyn #object {
             #[doc(hidden)]
-            pub fn typetag_register(name: &'static str, deserializer: TypetagFn) -> TypetagRegistration {
+            #vis fn typetag_register(name: &'static str, deserializer: TypetagFn) -> TypetagRegistration {
                 TypetagRegistration { name, deserializer }
             }
         }

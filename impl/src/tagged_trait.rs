@@ -150,25 +150,23 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
             }
         }
 
-        typetag::lazy_static::lazy_static! {
-            static ref TYPETAG: typetag::Registry<TypetagStrictest> = {
-                let mut map = std::collections::BTreeMap::new();
-                let mut names = std::vec::Vec::new();
-                for registered in typetag::inventory::iter::<TypetagRegistration<TypetagFn>> {
-                    match map.entry(registered.name) {
-                        std::collections::btree_map::Entry::Vacant(entry) => {
-                            entry.insert(std::option::Option::Some(registered.deserializer));
-                        }
-                        std::collections::btree_map::Entry::Occupied(mut entry) => {
-                            entry.insert(std::option::Option::None);
-                        }
+        static TYPETAG: typetag::once_cell::sync::Lazy<typetag::Registry<TypetagStrictest>> = typetag::once_cell::sync::Lazy::new(|| {
+            let mut map = std::collections::BTreeMap::new();
+            let mut names = std::vec::Vec::new();
+            for registered in typetag::inventory::iter::<TypetagRegistration<TypetagFn>> {
+                match map.entry(registered.name) {
+                    std::collections::btree_map::Entry::Vacant(entry) => {
+                        entry.insert(std::option::Option::Some(registered.deserializer));
                     }
-                    names.push(registered.name);
+                    std::collections::btree_map::Entry::Occupied(mut entry) => {
+                        entry.insert(std::option::Option::None);
+                    }
                 }
-                names.sort_unstable();
-                typetag::Registry { map, names }
-            };
-        }
+                names.push(registered.name);
+            }
+            names.sort_unstable();
+            typetag::Registry { map, names }
+        });
     }
 }
 

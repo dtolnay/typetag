@@ -33,14 +33,13 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
     if mode.de {
         expanded.extend(quote! {
             typetag::inventory::submit! {
-                #![crate = typetag]
                 <dyn #object>::typetag_register(
                     #name,
-                    |deserializer| std::result::Result::Ok(
+                    (|deserializer| std::result::Result::Ok(
                         std::boxed::Box::new(
                             typetag::erased_serde::deserialize::<#this>(deserializer)?
                         ),
-                    ),
+                    )) as typetag::DeserializeFn<<dyn #object as typetag::Strictest>::Object>,
                 )
             }
         });

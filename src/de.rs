@@ -1,4 +1,4 @@
-use crate::{DeserializeFn, Registry};
+use crate::{DeserializeFn, Registry, RegistryEntry};
 use serde::de::{self, DeserializeSeed, Deserializer, Expected, Visitor};
 use std::fmt;
 
@@ -15,12 +15,20 @@ impl<'de, 'a, T: ?Sized + 'static> Visitor<'de> for MapLookupVisitor<'a, T> {
     }
 
     fn visit_str<E>(self, key: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
+        where
+            E: serde::de::Error,
     {
-        match self.registry.map.get(key) {
-            Some(Some(value)) => Ok(*value),
-            Some(None) => Err(de::Error::custom(format_args!(
+        match self
+            .registry
+            .entries
+            .iter()
+            .find(|re| (re.comparison_function)(key))
+        {
+            Some(RegistryEntry {
+                     deserialize_function: Some(value),
+                     ..
+                 }) => Ok(*value),
+            Some(_) => Err(de::Error::custom(format_args!(
                 "non-unique tag of {}: {:?}",
                 self.expected, key
             ))),
@@ -33,8 +41,8 @@ impl<'de, 'a, T: ?Sized + 'static> DeserializeSeed<'de> for MapLookupVisitor<'a,
     type Value = DeserializeFn<T>;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         deserializer.deserialize_str(self)
     }
@@ -48,8 +56,8 @@ impl<'de, T: ?Sized> DeserializeSeed<'de> for FnApply<T> {
     type Value = Box<T>;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         let mut erased = <dyn erased_serde::Deserializer>::erase(deserializer);
         (self.deserialize_fn)(&mut erased).map_err(de::Error::custom)

@@ -297,9 +297,9 @@
 //! [`erased-serde`]: https://github.com/dtolnay/erased-serde
 
 #![allow(
-    clippy::missing_errors_doc,
-    clippy::module_name_repetitions,
-    clippy::unnested_or_patterns
+clippy::missing_errors_doc,
+clippy::module_name_repetitions,
+clippy::unnested_or_patterns
 )]
 
 #[doc(hidden)]
@@ -341,12 +341,23 @@ mod ser;
 #[doc(hidden)]
 pub type DeserializeFn<T> = fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;
 
-use std::collections::BTreeMap;
+#[doc(hidden)]
+pub type ComparisonFn = fn(&str) -> bool;
+
+#[repr(transparent)]
+pub struct WrappedComparisonFn(pub ComparisonFn);
+
+pub struct RegistryEntry<T: ?Sized> {
+    pub name: &'static str,
+    pub priority: isize,
+    pub comparison_function: ComparisonFn,
+    pub deserialize_function: Option<DeserializeFn<T>>,
+}
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
 pub struct Registry<T: ?Sized> {
-    pub map: BTreeMap<&'static str, Option<DeserializeFn<T>>>,
+    pub entries: Vec<RegistryEntry<T>>,
     pub names: Vec<&'static str>,
 }
 

@@ -1,3 +1,4 @@
+use crate::parse::Priority;
 use crate::{ImplArgs, Mode};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -30,11 +31,35 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         #input
     };
 
+    let comparison_function = if args.priority.is_default() {
+        if args.comparison_function.is_none() {
+            quote! {|_|true}
+        } else {
+            let msg = "a default variant must not have a comparison method defined.";
+            return Error::new_spanned(&input.self_ty, msg).to_compile_error();
+        }
+    } else {
+        match args.comparison_function {
+            Some(comparison_function) => quote!(#comparison_function),
+            None => {
+                quote! {|key|key==#name}
+            }
+        }
+    };
+
+    let priority = match args.priority {
+        Priority::Defined(priority) => quote!(#priority),
+        Priority::Undefined => quote! {0},
+        Priority::Default => quote! {isize::MIN},
+    };
+
     if mode.de {
         expanded.extend(quote! {
             typetag::inventory::submit! {
                 <dyn #object>::typetag_register(
                     #name,
+                    #priority,
+                    typetag::WrappedComparisonFn(#comparison_function),
                     (|deserializer| std::result::Result::Ok(
                         std::boxed::Box::new(
                             typetag::erased_serde::deserialize::<#this>(deserializer)?

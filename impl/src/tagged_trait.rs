@@ -135,9 +135,12 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
     quote! {
         type TypetagStrictest = <dyn #object as typetag::Strictest>::Object;
         type TypetagFn = typetag::DeserializeFn<TypetagStrictest>;
+        type ComparisonFn = typetag::ComparisonFn;
 
         #vis struct TypetagRegistration<T> {
             name: &'static str,
+            priority: isize,
+            comparison_func: typetag::WrappedComparisonFn,
             deserializer: T,
         }
 
@@ -145,27 +148,26 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
 
         impl dyn #object {
             #[doc(hidden)]
-            #vis const fn typetag_register<T>(name: &'static str, deserializer: T) -> TypetagRegistration<T> {
-                TypetagRegistration { name, deserializer }
+            #vis const fn typetag_register<T>(name: &'static str, priority: isize, comparison_func: typetag::WrappedComparisonFn, deserializer: T) -> TypetagRegistration<T> {
+                TypetagRegistration { name, priority, comparison_func, deserializer }
             }
         }
 
         static TYPETAG: typetag::once_cell::sync::Lazy<typetag::Registry<TypetagStrictest>> = typetag::once_cell::sync::Lazy::new(|| {
-            let mut map = std::collections::BTreeMap::new();
+            let mut entries = vec![];
             let mut names = std::vec::Vec::new();
             for registered in typetag::inventory::iter::<TypetagRegistration<TypetagFn>> {
-                match map.entry(registered.name) {
-                    std::collections::btree_map::Entry::Vacant(entry) => {
-                        entry.insert(std::option::Option::Some(registered.deserializer));
-                    }
-                    std::collections::btree_map::Entry::Occupied(mut entry) => {
-                        entry.insert(std::option::Option::None);
-                    }
-                }
+                entries.push(typetag::RegistryEntry{
+                    name: registered.name,
+                    priority: registered.priority,
+                    comparison_function: registered.comparison_func.0,
+                    deserialize_function: std::option::Option::Some(registered.deserializer)
+                });
                 names.push(registered.name);
             }
-            names.sort_unstable();
-            typetag::Registry { map, names }
+            entries.sort_unstable_by_key(|item|item.priority);
+            entries.reverse();
+            typetag::Registry { entries, names }
         });
     }
 }

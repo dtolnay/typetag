@@ -63,6 +63,158 @@ mod externally_tagged {
     }
 }
 
+mod externally_tagged_own_compared {
+    use super::{A, B};
+
+    fn trait_take_a(key: &str) -> bool {
+        key.to_string().to_lowercase() == "a"
+    }
+
+    fn trait_take_b(key: &str) -> bool {
+        key.to_string().to_lowercase() == "b"
+    }
+
+    #[typetag::serde]
+    trait Trait {
+        fn assert_a_is_11(&self);
+        fn assert_b_is_11(&self);
+    }
+
+    #[typetag::serde(compare = trait_take_a)]
+    impl Trait for A {
+        fn assert_a_is_11(&self) {
+            assert_eq!(self.a, 11);
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+    }
+
+    #[typetag::serde(compare = trait_take_b)]
+    impl Trait for B {
+        fn assert_a_is_11(&self) {
+            panic!("is not A!");
+        }
+        fn assert_b_is_11(&self) {
+            assert_eq!(self.b, 11);
+        }
+    }
+
+    #[test]
+    fn test_json_serialize() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"A":{"a":11}}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_deserialize() {
+        let json = r#"{"B":{"b":11}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_b_is_11();
+    }
+
+    #[test]
+    fn test_bincode_round_trip() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_a_is_11();
+    }
+}
+
+mod externally_tagged_default {
+    use super::B;
+    use super::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    struct AorB {
+        #[serde(rename = "a", alias = "b")]
+        a_or_b: u8,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct Default {
+        default: u8,
+    }
+
+    fn trait_take_a_or_b(key: &str) -> bool {
+        key.to_string().to_lowercase() == "a" || key.to_string().to_lowercase() == "b"
+    }
+
+    fn trait_take_b(key: &str) -> bool {
+        key.to_string().to_lowercase() == "b"
+    }
+
+    #[typetag::serde]
+    trait Trait {
+        fn assert_a_or_b_are_11(&self);
+        fn assert_b_is_11(&self);
+        fn assert_default_is_11(&self);
+    }
+
+    #[typetag::serde(compare = trait_take_a_or_b)]
+    impl Trait for AorB {
+        fn assert_a_or_b_are_11(&self) {
+            assert_eq!(self.a_or_b, 11);
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+        fn assert_default_is_11(&self) {
+            panic!("is not Default!");
+        }
+    }
+
+    #[typetag::serde(compare = trait_take_b, priority = 1)]
+    impl Trait for B {
+        fn assert_a_or_b_are_11(&self) {
+            assert_eq!(self.b, 11);
+        }
+        fn assert_b_is_11(&self) {
+            assert_eq!(self.b, 11);
+        }
+        fn assert_default_is_11(&self) {
+            panic!("is not Default!");
+        }
+    }
+
+    #[typetag::serde(default)]
+    impl Trait for Default {
+        fn assert_a_or_b_are_11(&self) {
+            panic!("is whether A nor B!");
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+        fn assert_default_is_11(&self) {
+            assert_eq!(self.default, 11);
+        }
+    }
+
+    #[test]
+    fn test_json_deserialize_a() {
+        let json = r#"{"A":{"a":11}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_a_or_b_are_11();
+    }
+
+    #[test]
+    fn test_json_deserialize_b() {
+        let json = r#"{"B":{"b":11}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_b_is_11();
+    }
+
+    #[test]
+    fn test_deserialize_default() {
+        let json = r#"{"X":{"default":11}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_default_is_11();
+    }
+}
+
 mod internally_tagged {
     use super::{A, B};
 
@@ -186,15 +338,15 @@ mod marker_traits {
     trait Both: Send + Sync {}
 
     fn assert_serialize<T>()
-    where
-        T: ?Sized + Serialize,
+        where
+            T: ?Sized + Serialize,
     {
     }
 
     fn assert_deserialize<T>()
-    where
-        T: ?Sized,
-        Box<T>: DeserializeOwned,
+        where
+            T: ?Sized,
+            Box<T>: DeserializeOwned,
     {
     }
 

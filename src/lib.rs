@@ -356,7 +356,7 @@ pub struct Registry<T: ?Sized> {
 #[doc(hidden)]
 pub trait Serialize: erased_serde::Serialize {}
 
-impl<T: ?Sized> Serialize for T where T: erased_serde::Serialize {}
+impl<T> Serialize for T where T: ?Sized + erased_serde::Serialize {}
 
 // Object-safe trait bound inserted by typetag deserialization. We want this
 // just so the serialization requirement appears on rustdoc's view of your

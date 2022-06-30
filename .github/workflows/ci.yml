@@ -22,21 +22,3 @@ jobs:
         with:
           toolchain: ${{matrix.rust}}
       - run: cargo test
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@clippy
-      - run: cargo clippy --tests -- -Dclippy::all -Dclippy::pedantic
-
-  outdated:
-    name: Outdated
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/install@cargo-outdated
-      - run: cargo outdated --exit-code 1

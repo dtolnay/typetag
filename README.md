@@ -17,7 +17,7 @@ Let's dive into the example and I'll explain some more below.
 typetag = "0.1"
 ```
 
-*Supports rustc 1.37+*
+*Supports rustc 1.62+*
 
 <br>
 

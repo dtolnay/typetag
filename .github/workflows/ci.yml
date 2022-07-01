@@ -10,12 +10,23 @@ env:
 
 jobs:
   test:
-    name: Rust ${{matrix.rust}}
-    runs-on: ubuntu-latest
+    name: ${{matrix.name || format('Rust {0}', matrix.rust)}}
+    runs-on: ${{matrix.os}}-latest
     strategy:
       fail-fast: false
       matrix:
         rust: [nightly, beta, stable, 1.62.0]
+        os: [ubuntu]
+        include:
+          - name: macOS
+            os: macos
+            rust: nightly
+          - name: Windows (gnu)
+            os: windows
+            rust: nightly-x86_64-pc-windows-gnu
+          - name: Windows (msvc)
+            os: windows
+            rust: nightly-x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master

@@ -69,9 +69,13 @@ impl Parse for TraitArgs {
             return Ok(TraitArgs::Internal { tag });
         }
         input.parse::<Token![,]>()?;
+        if input.is_empty() {
+            return Ok(TraitArgs::Internal { tag });
+        }
         input.parse::<kw::content>()?;
         input.parse::<Token![=]>()?;
         let content: LitStr = input.parse()?;
+        input.parse::<Option<Token![,]>>()?;
         Ok(TraitArgs::Adjacent { tag, content })
     }
 }
@@ -86,6 +90,7 @@ impl Parse for ImplArgs {
             input.parse::<kw::name>()?;
             input.parse::<Token![=]>()?;
             let name: LitStr = input.parse()?;
+            input.parse::<Option<Token![,]>>()?;
             Some(name)
         };
         Ok(ImplArgs { name })

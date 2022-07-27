@@ -1,9 +1,9 @@
 use crate::{ImplArgs, Mode};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Error, ItemImpl, Type, TypePath};
+use syn::{parse_quote, Error, ItemImpl, Path, Type, TypePath};
 
-pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
+pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode, crate_path: &Path) -> TokenStream {
     if mode.de && !input.generics.params.is_empty() {
         let msg = "deserialization of generic impls is not supported yet; \
                    use #[typetag::serialize] to generate serialization only";
@@ -32,14 +32,14 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
 
     if mode.de {
         expanded.extend(quote! {
-            typetag::__private::inventory::submit! {
+            #crate_path::__private::inventory::submit! {
                 <dyn #object>::typetag_register(
                     #name,
                     (|deserializer| typetag::__private::Result::Ok(
-                        typetag::__private::Box::new(
-                            typetag::__private::erased_serde::deserialize::<#this>(deserializer)?
+                        #crate_path::__private::Box::new(
+                            #crate_path::__private::erased_serde::deserialize::<#this>(deserializer)?
                         ),
-                    )) as typetag::__private::DeserializeFn<<dyn #object as typetag::__private::Strictest>::Object>,
+                    )) as #crate_path::__private::DeserializeFn<<dyn #object as #crate_path::__private::Strictest>::Object>,
                 )
             }
         });

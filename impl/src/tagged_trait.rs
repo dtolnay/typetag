@@ -1,21 +1,21 @@
 use crate::{Mode, TraitArgs};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{parse_quote, Error, Ident, ItemTrait, LitStr, TraitBoundModifier, TypeParamBound};
+use syn::{parse_quote, Error, Ident, ItemTrait, LitStr, Path, TraitBoundModifier, TypeParamBound};
 
-pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> TokenStream {
+pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode, crate_path: &Path) -> TokenStream {
     if mode.de && !input.generics.params.is_empty() {
         let msg = "deserialization of generic traits is not supported yet; \
                    use #[typetag::serialize] to generate serialization only";
         return Error::new_spanned(input.generics, msg).to_compile_error();
     }
 
-    augment_trait(&mut input, mode);
+    augment_trait(&mut input, mode, crate_path);
 
     let (serialize_impl, deserialize_impl) = match args {
-        TraitArgs::External => externally_tagged(&input),
-        TraitArgs::Internal { tag } => internally_tagged(tag, &input),
-        TraitArgs::Adjacent { tag, content } => adjacently_tagged(tag, content, &input),
+        TraitArgs::External => externally_tagged(&input, crate_path),
+        TraitArgs::Internal { tag } => internally_tagged(tag, &input, crate_path),
+        TraitArgs::Adjacent { tag, content } => adjacently_tagged(tag, content, &input, crate_path),
     };
 
     let object = &input.ident;
@@ -29,11 +29,11 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
         let (_, ty_generics, where_clause) = input.generics.split_for_impl();
 
         expanded.extend(quote! {
-            impl #impl_generics typetag::__private::serde::Serialize
+            impl #impl_generics #crate_path::__private::serde::Serialize
             for dyn #object #ty_generics + 'typetag #where_clause {
-                fn serialize<S>(&self, serializer: S) -> typetag::__private::Result<S::Ok, S::Error>
+                fn serialize<S>(&self, serializer: S) -> #crate_path::__private::Result<S::Ok, S::Error>
                 where
-                    S: typetag::__private::serde::Serializer,
+                    S: #crate_path::__private::serde::Serializer,
                 {
                     #serialize_impl
                 }
@@ -42,13 +42,13 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
         for marker_traits in &[quote!(Send), quote!(Sync), quote!(Send + Sync)] {
             expanded.extend(quote! {
-                impl #impl_generics typetag::__private::serde::Serialize
+                impl #impl_generics #crate_path::__private::serde::Serialize
                 for dyn #object #ty_generics + #marker_traits + 'typetag #where_clause {
-                    fn serialize<S>(&self, serializer: S) -> typetag::__private::Result<S::Ok, S::Error>
+                    fn serialize<S>(&self, serializer: S) -> #crate_path::__private::Result<S::Ok, S::Error>
                     where
-                        S: typetag::__private::serde::Serializer,
+                        S: #crate_path::__private::serde::Serializer,
                     {
-                        typetag::__private::serde::Serialize::serialize(self as &dyn #object #ty_generics, serializer)
+                        #crate_path::__private::serde::Serialize::serialize(self as &dyn #object #ty_generics, serializer)
                     }
                 }
             });
@@ -56,7 +56,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
     }
 
     if mode.de {
-        let registry = build_registry(&input);
+        let registry = build_registry(&input, crate_path);
 
         let is_send = has_supertrait(&input, "Send");
         let is_sync = has_supertrait(&input, "Sync");
@@ -73,14 +73,14 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
         expanded.extend(quote! {
             #registry
 
-            impl typetag::__private::Strictest for dyn #object {
+            impl #crate_path::__private::Strictest for dyn #object {
                 type Object = dyn #object + #strictest;
             }
 
-            impl<'de> typetag::__private::serde::Deserialize<'de> for typetag::__private::Box<dyn #object + #strictest> {
-                fn deserialize<D>(deserializer: D) -> typetag::__private::Result<Self, D::Error>
+            impl<'de> #crate_path::__private::serde::Deserialize<'de> for #crate_path::__private::Box<dyn #object + #strictest> {
+                fn deserialize<D>(deserializer: D) -> #crate_path::__private::Result<Self, D::Error>
                 where
-                    D: typetag::__private::serde::Deserializer<'de>,
+                    D: #crate_path::__private::serde::Deserializer<'de>,
                 {
                     #deserialize_impl
                 }
@@ -89,14 +89,14 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
         for marker_traits in others {
             expanded.extend(quote! {
-                impl<'de> typetag::__private::serde::Deserialize<'de> for typetag::__private::Box<dyn #object + #marker_traits> {
-                    fn deserialize<D>(deserializer: D) -> typetag::__private::Result<Self, D::Error>
+                impl<'de> #crate_path::__private::serde::Deserialize<'de> for #crate_path::__private::Box<dyn #object + #marker_traits> {
+                    fn deserialize<D>(deserializer: D) -> #crate_path::__private::Result<Self, D::Error>
                     where
-                        D: typetag::__private::serde::Deserializer<'de>,
+                        D: #crate_path::__private::serde::Deserializer<'de>,
                     {
-                        typetag::__private::Result::Ok(
-                            <typetag::__private::Box<dyn #object + #strictest>
-                                as typetag::__private::serde::Deserialize<'de>>::deserialize(deserializer)?
+                        #crate_path::__private::Result::Ok(
+                            <#crate_path::__private::Box<dyn #object + #strictest>
+                                as #crate_path::__private::serde::Deserialize<'de>>::deserialize(deserializer)?
                         )
                     }
                 }
@@ -107,9 +107,9 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
     wrap_in_dummy_const(input, expanded)
 }
 
-fn augment_trait(input: &mut ItemTrait, mode: Mode) {
+fn augment_trait(input: &mut ItemTrait, mode: Mode, crate_path: &Path) {
     if mode.ser {
-        input.supertraits.push(parse_quote!(typetag::Serialize));
+        input.supertraits.push(parse_quote!(#crate_path::Serialize));
 
         input.items.push(parse_quote! {
             #[doc(hidden)]
@@ -118,7 +118,7 @@ fn augment_trait(input: &mut ItemTrait, mode: Mode) {
     }
 
     if mode.de {
-        input.supertraits.push(parse_quote!(typetag::Deserialize));
+        input.supertraits.push(parse_quote!(#crate_path::Deserialize));
 
         // Only to catch missing typetag attribute on impl blocks. Not called.
         input.items.push(parse_quote! {
@@ -128,20 +128,20 @@ fn augment_trait(input: &mut ItemTrait, mode: Mode) {
     }
 }
 
-fn build_registry(input: &ItemTrait) -> TokenStream {
+fn build_registry(input: &ItemTrait, crate_path: &Path) -> TokenStream {
     let vis = &input.vis;
     let object = &input.ident;
 
     quote! {
-        type TypetagStrictest = <dyn #object as typetag::__private::Strictest>::Object;
-        type TypetagFn = typetag::__private::DeserializeFn<TypetagStrictest>;
+        type TypetagStrictest = <dyn #object as #crate_path::__private::Strictest>::Object;
+        type TypetagFn = #crate_path::__private::DeserializeFn<TypetagStrictest>;
 
         #vis struct TypetagRegistration<T> {
             name: &'static str,
             deserializer: T,
         }
 
-        typetag::__private::inventory::collect!(TypetagRegistration<TypetagFn>);
+        #crate_path::__private::inventory::collect!(TypetagRegistration<TypetagFn>);
 
         impl dyn #object {
             #[doc(hidden)]
@@ -152,62 +152,62 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
     }
 }
 
-fn static_registry() -> TokenStream {
+fn static_registry(crate_path: &Path) -> TokenStream {
     quote! {
-        static TYPETAG: typetag::__private::once_cell::race::OnceBox<typetag::__private::Registry<TypetagStrictest>> = typetag::__private::once_cell::race::OnceBox::new();
+        static TYPETAG: #crate_path::__private::once_cell::race::OnceBox<#crate_path::__private::Registry<TypetagStrictest>> = #crate_path::__private::once_cell::race::OnceBox::new();
         let registry = TYPETAG.get_or_init(|| {
-            let mut map = typetag::__private::BTreeMap::new();
-            let mut names = typetag::__private::Vec::new();
-            for registered in typetag::__private::inventory::iter::<TypetagRegistration<TypetagFn>> {
+            let mut map = #crate_path::__private::BTreeMap::new();
+            let mut names = #crate_path::__private::Vec::new();
+            for registered in #crate_path::__private::inventory::iter::<TypetagRegistration<TypetagFn>> {
                 match map.entry(registered.name) {
-                    typetag::__private::btree_map::Entry::Vacant(entry) => {
-                        entry.insert(typetag::__private::Option::Some(registered.deserializer));
+                    #crate_path::__private::btree_map::Entry::Vacant(entry) => {
+                        entry.insert(#crate_path::__private::Option::Some(registered.deserializer));
                     }
-                    typetag::__private::btree_map::Entry::Occupied(mut entry) => {
-                        entry.insert(typetag::__private::Option::None);
+                    #crate_path::__private::btree_map::Entry::Occupied(mut entry) => {
+                        entry.insert(#crate_path::__private::Option::None);
                     }
                 }
                 names.push(registered.name);
             }
             names.sort_unstable();
-            typetag::__private::Box::new(typetag::__private::Registry { map, names })
+            #crate_path::__private::Box::new(#crate_path::__private::Registry { map, names })
         });
     }
 }
 
-fn externally_tagged(input: &ItemTrait) -> (TokenStream, TokenStream) {
+fn externally_tagged(input: &ItemTrait, crate_path: &Path) -> (TokenStream, TokenStream) {
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
-    let static_registry = static_registry();
+    let static_registry = static_registry(crate_path);
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
-        typetag::__private::externally::serialize(serializer, name, self)
+        #crate_path::__private::externally::serialize(serializer, name, self)
     };
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::__private::externally::deserialize(deserializer, #object_name, registry)
+        #crate_path::__private::externally::deserialize(deserializer, #object_name, registry)
     };
 
     (serialize_impl, deserialize_impl)
 }
 
-fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStream) {
+fn internally_tagged(tag: LitStr, input: &ItemTrait, crate_path: &Path) -> (TokenStream, TokenStream) {
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
-    let static_registry = static_registry();
+    let static_registry = static_registry(crate_path);
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
-        typetag::__private::internally::serialize(serializer, #tag, name, self)
+        #crate_path::__private::internally::serialize(serializer, #tag, name, self)
     };
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::__private::internally::deserialize(deserializer, #object_name, #tag, registry)
+        #crate_path::__private::internally::deserialize(deserializer, #object_name, #tag, registry)
     };
 
     (serialize_impl, deserialize_impl)
@@ -217,20 +217,21 @@ fn adjacently_tagged(
     tag: LitStr,
     content: LitStr,
     input: &ItemTrait,
+    crate_path: &Path,
 ) -> (TokenStream, TokenStream) {
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
-    let static_registry = static_registry();
+    let static_registry = static_registry(crate_path);
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
-        typetag::__private::adjacently::serialize(serializer, #object_name, #tag, name, #content, self)
+        #crate_path::__private::adjacently::serialize(serializer, #object_name, #tag, name, #content, self)
     };
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::__private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], registry)
+        #crate_path::__private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], registry)
     };
 
     (serialize_impl, deserialize_impl)

@@ -305,7 +305,6 @@
 )]
 
 extern crate alloc;
-
 mod adjacently;
 mod content;
 mod de;
@@ -315,7 +314,7 @@ mod ser;
 
 use self::__private as private;
 
-pub use typetag_impl::{deserialize, serde, serialize};
+pub use typetag_macro::{deserialize, serde, serialize};
 
 // Object-safe trait bound inserted by typetag serialization. We want this just
 // so the serialization requirement appears on rustdoc's view of your trait.

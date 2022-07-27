@@ -12,14 +12,14 @@ repository = "https://github.com/dtolnay/typetag"
 rust-version = "1.62"
 
 [workspace]
-members = ["impl"]
+members = ["impl", "macro"]
 
 [dependencies]
 erased-serde = { version = "0.3", default-features = false, features = ["alloc"] }
 inventory = "0.3"
 once_cell = { version = "1.0", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-typetag-impl = { version = "=0.2.3", path = "impl" }
+typetag-macro = { version = "=0.2.3", path = "macro" }
 
 [dev-dependencies]
 bincode = "1.0"

@@ -12,33 +12,18 @@ use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
 #[derive(Copy, Clone)]
-pub(crate) struct Mode {
+pub struct Mode {
     ser: bool,
     de: bool,
 }
 
-#[proc_macro_attribute]
-pub fn serde(args: TokenStream, input: TokenStream) -> TokenStream {
-    let ser = true;
-    let de = true;
-    expand(args, input, Mode { ser, de })
+impl Mode {
+    pub fn new(ser: bool, de: bool) -> Self {
+        Mode { ser, de }
+    }
 }
 
-#[proc_macro_attribute]
-pub fn serialize(args: TokenStream, input: TokenStream) -> TokenStream {
-    let ser = true;
-    let de = false;
-    expand(args, input, Mode { ser, de })
-}
-
-#[proc_macro_attribute]
-pub fn deserialize(args: TokenStream, input: TokenStream) -> TokenStream {
-    let ser = false;
-    let de = true;
-    expand(args, input, Mode { ser, de })
-}
-
-fn expand(args: TokenStream, input: TokenStream, mode: Mode) -> TokenStream {
+pub fn expand(args: TokenStream, input: TokenStream, mode: Mode) -> TokenStream {
     let input = parse_macro_input!(input as Input);
 
     TokenStream::from(match input {

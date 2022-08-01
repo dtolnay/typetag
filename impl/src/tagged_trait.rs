@@ -154,7 +154,8 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
 
 fn static_registry() -> TokenStream {
     quote! {
-        static TYPETAG: typetag::private::once_cell::sync::Lazy<typetag::private::Registry<TypetagStrictest>> = typetag::private::once_cell::sync::Lazy::new(|| {
+        static TYPETAG: typetag::private::once_cell::race::OnceBox<typetag::private::Registry<TypetagStrictest>> = typetag::private::once_cell::race::OnceBox::new();
+        let registry = TYPETAG.get_or_init(|| {
             let mut map = typetag::private::BTreeMap::new();
             let mut names = typetag::private::Vec::new();
             for registered in typetag::private::inventory::iter::<TypetagRegistration<TypetagFn>> {
@@ -169,7 +170,7 @@ fn static_registry() -> TokenStream {
                 names.push(registered.name);
             }
             names.sort_unstable();
-            typetag::private::Registry { map, names }
+            typetag::private::Box::new(typetag::private::Registry { map, names })
         });
     }
 }
@@ -187,7 +188,7 @@ fn externally_tagged(input: &ItemTrait) -> (TokenStream, TokenStream) {
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::private::externally::deserialize(deserializer, #object_name, &TYPETAG)
+        typetag::private::externally::deserialize(deserializer, #object_name, registry)
     };
 
     (serialize_impl, deserialize_impl)
@@ -206,7 +207,7 @@ fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStrea
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::private::internally::deserialize(deserializer, #object_name, #tag, &TYPETAG)
+        typetag::private::internally::deserialize(deserializer, #object_name, #tag, registry)
     };
 
     (serialize_impl, deserialize_impl)
@@ -229,7 +230,7 @@ fn adjacently_tagged(
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], &TYPETAG)
+        typetag::private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], registry)
     };
 
     (serialize_impl, deserialize_impl)

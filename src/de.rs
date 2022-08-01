@@ -1,6 +1,7 @@
 use crate::private::{DeserializeFn, Registry};
+use alloc::boxed::Box;
+use core::fmt;
 use serde::de::{self, DeserializeSeed, Deserializer, Expected, Visitor};
-use std::fmt;
 
 pub struct MapLookupVisitor<'a, T: ?Sized + 'static> {
     pub expected: &'a dyn Expected,

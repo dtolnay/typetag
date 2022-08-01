@@ -2,12 +2,13 @@ use crate::content::Content;
 use crate::de::{FnApply, MapLookupVisitor};
 use crate::private::Registry;
 use crate::ser::Wrap;
+use alloc::boxed::Box;
+use core::fmt;
 use serde::de::{
     self, DeserializeSeed, Deserializer, IgnoredAny, IntoDeserializer, MapAccess, SeqAccess,
     Visitor,
 };
 use serde::ser::{SerializeStruct, Serializer};
-use std::fmt;
 
 pub fn serialize<S, T>(
     serializer: S,

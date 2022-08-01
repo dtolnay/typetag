@@ -2,12 +2,12 @@
 name = "typetag-impl"
 version = "0.2.1"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
-license = "MIT OR Apache-2.0"
 description = "Implementation detail of the typetag crate"
-repository = "https://github.com/dtolnay/typetag"
 documentation = "https://docs.rs/typetag"
-readme = "README.md"
 edition = "2018"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/dtolnay/typetag"
 
 [lib]
 proc-macro = true

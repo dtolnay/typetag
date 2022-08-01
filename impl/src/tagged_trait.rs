@@ -149,7 +149,11 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
                 TypetagRegistration { name, deserializer }
             }
         }
+    }
+}
 
+fn static_registry() -> TokenStream {
+    quote! {
         static TYPETAG: typetag::private::once_cell::sync::Lazy<typetag::private::Registry<TypetagStrictest>> = typetag::private::once_cell::sync::Lazy::new(|| {
             let mut map = typetag::private::BTreeMap::new();
             let mut names = typetag::private::Vec::new();
@@ -174,6 +178,7 @@ fn externally_tagged(input: &ItemTrait) -> (TokenStream, TokenStream) {
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
+    let static_registry = static_registry();
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
@@ -181,6 +186,7 @@ fn externally_tagged(input: &ItemTrait) -> (TokenStream, TokenStream) {
     };
 
     let deserialize_impl = quote! {
+        #static_registry
         typetag::private::externally::deserialize(deserializer, #object_name, &TYPETAG)
     };
 
@@ -191,6 +197,7 @@ fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStrea
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
+    let static_registry = static_registry();
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
@@ -198,6 +205,7 @@ fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStrea
     };
 
     let deserialize_impl = quote! {
+        #static_registry
         typetag::private::internally::deserialize(deserializer, #object_name, #tag, &TYPETAG)
     };
 
@@ -212,6 +220,7 @@ fn adjacently_tagged(
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
+    let static_registry = static_registry();
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
@@ -219,6 +228,7 @@ fn adjacently_tagged(
     };
 
     let deserialize_impl = quote! {
+        #static_registry
         typetag::private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], &TYPETAG)
     };
 

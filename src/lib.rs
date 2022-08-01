@@ -303,7 +303,7 @@
 )]
 
 #[doc(hidden)]
-pub use typetag_impl::*;
+pub use typetag_impl::{deserialize, serde, serialize};
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
@@ -315,7 +315,7 @@ pub use erased_serde;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
-pub use serde;
+pub use ::serde;
 
 // Not public API. Used by generated code.
 #[doc(hidden)]

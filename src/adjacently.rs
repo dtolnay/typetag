@@ -1,7 +1,7 @@
 use crate::content::Content;
 use crate::de::{FnApply, MapLookupVisitor};
+use crate::private::Registry;
 use crate::ser::Wrap;
-use crate::Registry;
 use serde::de::{
     self, DeserializeSeed, Deserializer, IgnoredAny, IntoDeserializer, MapAccess, SeqAccess,
     Visitor,

@@ -302,53 +302,14 @@
     clippy::unnested_or_patterns
 )]
 
-#[doc(hidden)]
 pub use typetag_impl::{deserialize, serde, serialize};
 
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub use inventory;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub use erased_serde;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub use ::serde;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub use once_cell;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub mod externally;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub mod internally;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub mod adjacently;
-
+mod adjacently;
 mod content;
 mod de;
+mod externally;
+mod internally;
 mod ser;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub type DeserializeFn<T> = fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;
-
-use std::collections::BTreeMap;
-
-// Not public API. Used by generated code.
-#[doc(hidden)]
-pub struct Registry<T: ?Sized> {
-    pub map: BTreeMap<&'static str, Option<DeserializeFn<T>>>,
-    pub names: Vec<&'static str>,
-}
 
 // Object-safe trait bound inserted by typetag serialization. We want this just
 // so the serialization requirement appears on rustdoc's view of your trait.
@@ -366,8 +327,37 @@ pub trait Deserialize {}
 
 impl<T> Deserialize for T {}
 
-// Not public API.
+// Not public API. Used by generated code.
 #[doc(hidden)]
-pub trait Strictest {
-    type Object: ?Sized;
+pub mod private {
+    use std::collections::BTreeMap;
+
+    pub extern crate erased_serde;
+    pub extern crate inventory;
+    pub extern crate once_cell;
+    pub extern crate serde;
+
+    pub mod externally {
+        pub use crate::externally::*;
+    }
+
+    pub mod internally {
+        pub use crate::internally::*;
+    }
+
+    pub mod adjacently {
+        pub use crate::adjacently::*;
+    }
+
+    pub type DeserializeFn<T> =
+        fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;
+
+    pub struct Registry<T: ?Sized> {
+        pub map: BTreeMap<&'static str, Option<DeserializeFn<T>>>,
+        pub names: Vec<&'static str>,
+    }
+
+    pub trait Strictest {
+        type Object: ?Sized;
+    }
 }

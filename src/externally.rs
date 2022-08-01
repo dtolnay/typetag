@@ -1,6 +1,6 @@
 use crate::de::{FnApply, MapLookupVisitor};
+use crate::private::Registry;
 use crate::ser::Wrap;
-use crate::Registry;
 use serde::de::{self, Deserializer, MapAccess, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use std::fmt;

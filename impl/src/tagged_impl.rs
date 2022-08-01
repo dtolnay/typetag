@@ -35,8 +35,8 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
             typetag::private::inventory::submit! {
                 <dyn #object>::typetag_register(
                     #name,
-                    (|deserializer| std::result::Result::Ok(
-                        std::boxed::Box::new(
+                    (|deserializer| typetag::private::Result::Ok(
+                        typetag::private::Box::new(
                             typetag::private::erased_serde::deserialize::<#this>(deserializer)?
                         ),
                     )) as typetag::private::DeserializeFn<<dyn #object as typetag::private::Strictest>::Object>,

@@ -31,7 +31,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
         expanded.extend(quote! {
             impl #impl_generics typetag::private::serde::Serialize
             for dyn #object #ty_generics + 'typetag #where_clause {
-                fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+                fn serialize<S>(&self, serializer: S) -> typetag::private::Result<S::Ok, S::Error>
                 where
                     S: typetag::private::serde::Serializer,
                 {
@@ -44,7 +44,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
             expanded.extend(quote! {
                 impl #impl_generics typetag::private::serde::Serialize
                 for dyn #object #ty_generics + #marker_traits + 'typetag #where_clause {
-                    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+                    fn serialize<S>(&self, serializer: S) -> typetag::private::Result<S::Ok, S::Error>
                     where
                         S: typetag::private::serde::Serializer,
                     {
@@ -77,8 +77,8 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
                 type Object = dyn #object + #strictest;
             }
 
-            impl<'de> typetag::private::serde::Deserialize<'de> for std::boxed::Box<dyn #object + #strictest> {
-                fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            impl<'de> typetag::private::serde::Deserialize<'de> for typetag::private::Box<dyn #object + #strictest> {
+                fn deserialize<D>(deserializer: D) -> typetag::private::Result<Self, D::Error>
                 where
                     D: typetag::private::serde::Deserializer<'de>,
                 {
@@ -89,13 +89,13 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
         for marker_traits in others {
             expanded.extend(quote! {
-                impl<'de> typetag::private::serde::Deserialize<'de> for std::boxed::Box<dyn #object + #marker_traits> {
-                    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+                impl<'de> typetag::private::serde::Deserialize<'de> for typetag::private::Box<dyn #object + #marker_traits> {
+                    fn deserialize<D>(deserializer: D) -> typetag::private::Result<Self, D::Error>
                     where
                         D: typetag::private::serde::Deserializer<'de>,
                     {
-                        std::result::Result::Ok(
-                            <std::boxed::Box<dyn #object + #strictest>
+                        typetag::private::Result::Ok(
+                            <typetag::private::Box<dyn #object + #strictest>
                                 as typetag::private::serde::Deserialize<'de>>::deserialize(deserializer)?
                         )
                     }
@@ -151,15 +151,15 @@ fn build_registry(input: &ItemTrait) -> TokenStream {
         }
 
         static TYPETAG: typetag::private::once_cell::sync::Lazy<typetag::private::Registry<TypetagStrictest>> = typetag::private::once_cell::sync::Lazy::new(|| {
-            let mut map = std::collections::BTreeMap::new();
-            let mut names = std::vec::Vec::new();
+            let mut map = typetag::private::BTreeMap::new();
+            let mut names = typetag::private::Vec::new();
             for registered in typetag::private::inventory::iter::<TypetagRegistration<TypetagFn>> {
                 match map.entry(registered.name) {
-                    std::collections::btree_map::Entry::Vacant(entry) => {
-                        entry.insert(std::option::Option::Some(registered.deserializer));
+                    typetag::private::btree_map::Entry::Vacant(entry) => {
+                        entry.insert(typetag::private::Option::Some(registered.deserializer));
                     }
-                    std::collections::btree_map::Entry::Occupied(mut entry) => {
-                        entry.insert(std::option::Option::None);
+                    typetag::private::btree_map::Entry::Occupied(mut entry) => {
+                        entry.insert(typetag::private::Option::None);
                     }
                 }
                 names.push(registered.name);

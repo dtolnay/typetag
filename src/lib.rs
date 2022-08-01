@@ -330,8 +330,6 @@ impl<T> Deserialize for T {}
 // Not public API. Used by generated code.
 #[doc(hidden)]
 pub mod private {
-    use std::collections::BTreeMap;
-
     pub extern crate erased_serde;
     pub extern crate inventory;
     pub extern crate once_cell;
@@ -348,6 +346,12 @@ pub mod private {
     pub mod adjacently {
         pub use crate::adjacently::*;
     }
+
+    pub use std::boxed::Box;
+    pub use std::collections::btree_map::{self, BTreeMap};
+    pub use std::option::Option;
+    pub use std::result::Result;
+    pub use std::vec::Vec;
 
     pub type DeserializeFn<T> =
         fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;

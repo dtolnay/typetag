@@ -1,9 +1,10 @@
 use crate::de::{FnApply, MapLookupVisitor};
 use crate::private::Registry;
 use crate::ser::Wrap;
+use alloc::boxed::Box;
+use core::fmt;
 use serde::de::{self, Deserializer, MapAccess, Visitor};
 use serde::ser::{SerializeMap, Serializer};
-use std::fmt;
 
 pub fn serialize<S, T>(
     serializer: S,

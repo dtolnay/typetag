@@ -1,9 +1,13 @@
 use crate::internally::DEFAULT_KEY;
+use alloc::borrow::ToOwned;
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
 use serde::ser::{
     self, Serialize, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant,
     SerializeTuple, SerializeTupleStruct, SerializeTupleVariant, Serializer,
 };
-use std::marker::PhantomData;
 
 pub struct Wrap<'a, T: ?Sized>(pub &'a T);
 

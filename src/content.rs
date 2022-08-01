@@ -1,11 +1,14 @@
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::fmt;
+use core::marker::PhantomData;
+use core::str;
 use serde::de::{
     self, value, Deserialize, DeserializeSeed, Deserializer, EnumAccess, Expected,
     IntoDeserializer, MapAccess, SeqAccess, Unexpected, VariantAccess, Visitor,
 };
 use serde::forward_to_deserialize_any;
-use std::fmt;
-use std::marker::PhantomData;
-use std::str;
 
 // Used from generated code to buffer the contents of the Deserializer when
 // deserializing internally and adjacently tagged trait objects.

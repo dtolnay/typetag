@@ -296,13 +296,14 @@
 //! [`ctor`]: https://github.com/mmastrac/rust-ctor
 //! [`erased-serde`]: https://github.com/dtolnay/erased-serde
 
+#![no_std]
 #![allow(
     clippy::missing_errors_doc,
     clippy::module_name_repetitions,
     clippy::unnested_or_patterns
 )]
 
-pub use typetag_impl::{deserialize, serde, serialize};
+extern crate alloc;
 
 mod adjacently;
 mod content;
@@ -310,6 +311,8 @@ mod de;
 mod externally;
 mod internally;
 mod ser;
+
+pub use typetag_impl::{deserialize, serde, serialize};
 
 // Object-safe trait bound inserted by typetag serialization. We want this just
 // so the serialization requirement appears on rustdoc's view of your trait.
@@ -347,11 +350,11 @@ pub mod private {
         pub use crate::adjacently::*;
     }
 
-    pub use std::boxed::Box;
-    pub use std::collections::btree_map::{self, BTreeMap};
-    pub use std::option::Option;
-    pub use std::result::Result;
-    pub use std::vec::Vec;
+    pub use alloc::boxed::Box;
+    pub use alloc::collections::btree_map::{self, BTreeMap};
+    pub use alloc::vec::Vec;
+    pub use core::option::Option;
+    pub use core::result::Result;
 
     pub type DeserializeFn<T> =
         fn(&mut dyn erased_serde::Deserializer) -> erased_serde::Result<Box<T>>;

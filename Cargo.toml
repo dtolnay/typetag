@@ -2,7 +2,7 @@
 name = "typetag"
 version = "0.2.1"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
-categories = ["encoding"]
+categories = ["encoding", "no-std"]
 description = "Serde serializable and deserializable trait objects"
 documentation = "https://docs.rs/typetag"
 edition = "2018"
@@ -16,10 +16,10 @@ rust-version = "1.62"
 members = ["impl"]
 
 [dependencies]
-erased-serde = "0.3"
+erased-serde = { version = "0.3", default-features = false, features = ["alloc"] }
 inventory = "0.3"
 once_cell = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 typetag-impl = { version = "=0.2.1", path = "impl" }
 
 [dev-dependencies]

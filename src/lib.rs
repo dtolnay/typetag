@@ -312,6 +312,8 @@ mod externally;
 mod internally;
 mod ser;
 
+use self::__private as private;
+
 pub use typetag_impl::{deserialize, serde, serialize};
 
 // Object-safe trait bound inserted by typetag serialization. We want this just
@@ -332,7 +334,7 @@ impl<T> Deserialize for T {}
 
 // Not public API. Used by generated code.
 #[doc(hidden)]
-pub mod private {
+pub mod __private {
     pub extern crate erased_serde;
     pub extern crate inventory;
     pub extern crate once_cell;

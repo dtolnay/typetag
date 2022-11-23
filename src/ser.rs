@@ -554,7 +554,7 @@ impl Serialize for Content {
             }
             Content::Map(ref entries) => {
                 let mut map = serializer.serialize_map(Some(entries.len()))?;
-                for &(ref k, ref v) in entries {
+                for (k, v) in entries {
                     map.serialize_entry(k, v)?;
                 }
                 map.end()

@@ -1,6 +1,6 @@
 use quote::quote;
 use syn::parse::{Parse, ParseStream, Result};
-use syn::{Attribute, Error, ItemImpl, ItemTrait, LitStr, Token, Visibility};
+use syn::{Attribute, Error, ImplItem, ItemImpl, ItemTrait, LitStr, Token, TraitItem, Visibility};
 
 mod kw {
     syn::custom_keyword!(tag);
@@ -33,6 +33,21 @@ impl Parse for Input {
 
         if ahead.peek(Token![trait]) {
             let mut item: ItemTrait = input.parse()?;
+            for assoc in &item.items {
+                if let TraitItem::Const(assoc) = assoc {
+                    let const_token = assoc.const_token;
+                    let semi_token = assoc.semi_token;
+                    let span = quote!(#const_token #semi_token);
+                    let msg = "typetag trait with associated const is not supported yet";
+                    return Err(Error::new_spanned(span, msg));
+                } else if let TraitItem::Type(assoc) = assoc {
+                    let type_token = assoc.type_token;
+                    let semi_token = assoc.semi_token;
+                    let span = quote!(#type_token #semi_token);
+                    let msg = "typetag trait with associated type is not supported yet";
+                    return Err(Error::new_spanned(span, msg));
+                }
+            }
             attrs.extend(item.attrs);
             item.attrs = attrs;
             Ok(Input::Trait(item))
@@ -44,6 +59,21 @@ impl Parse for Input {
                 let span = quote!(#impl_token #ty);
                 let msg = "expected impl Trait for Type";
                 return Err(Error::new_spanned(span, msg));
+            }
+            for assoc in &item.items {
+                if let ImplItem::Const(assoc) = assoc {
+                    let const_token = assoc.const_token;
+                    let semi_token = assoc.semi_token;
+                    let span = quote!(#const_token #semi_token);
+                    let msg = "typetag trait with associated const is not supported yet";
+                    return Err(Error::new_spanned(span, msg));
+                } else if let ImplItem::Type(assoc) = assoc {
+                    let type_token = assoc.type_token;
+                    let semi_token = assoc.semi_token;
+                    let span = quote!(#type_token #semi_token);
+                    let msg = "typetag trait with associated type is not supported yet";
+                    return Err(Error::new_spanned(span, msg));
+                }
             }
             attrs.extend(item.attrs);
             item.attrs = attrs;

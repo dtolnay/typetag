@@ -17,13 +17,13 @@ members = ["impl"]
 [dependencies]
 erased-serde = { version = "0.3", default-features = false, features = ["alloc"] }
 inventory = "0.3"
-once_cell = { version = "1.0", default-features = false, features = ["alloc"] }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+once_cell = { version = "1", default-features = false, features = ["alloc"] }
+serde = { version = "1", default-features = false, features = ["alloc", "derive"] }
 typetag-impl = { version = "=0.2.4", path = "impl" }
 
 [dev-dependencies]
-bincode = "1.0"
-serde_json = "1.0"
+bincode = "1"
+serde_json = "1"
 
 [lib]
 doc-scrape-examples = false

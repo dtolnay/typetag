@@ -23,7 +23,9 @@ typetag-impl = { version = "=0.2.4", path = "impl" }
 
 [dev-dependencies]
 bincode = "1"
+rustversion = "1"
 serde_json = "1"
+trybuild = "1"
 
 [lib]
 doc-scrape-examples = false

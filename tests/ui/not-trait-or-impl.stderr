@@ -1,0 +1,5 @@
+error: expected trait or impl block
+ --> tests/ui/not-trait-or-impl.rs:2:1
+  |
+2 | const HUH: () = ();
+  | ^^^^^

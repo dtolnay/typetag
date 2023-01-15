@@ -1,0 +1,5 @@
+error: use #[typetag::serde(name = "...")] to specify a unique name
+ --> tests/ui/unnamed.rs:5:16
+  |
+5 | impl Trait for (u8, u8) {}
+  |                ^^^^^^^^

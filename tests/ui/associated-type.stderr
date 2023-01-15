@@ -1,0 +1,7 @@
+error[E0191]: the value of the associated type `Assoc` (from trait `Trait`) must be specified
+ --> tests/ui/associated-type.rs:2:11
+  |
+2 | pub trait Trait {
+  |           ^^^^^ help: specify the associated type: `Trait<Assoc = Type>`
+3 |     type Assoc;
+  |     ---------- `Assoc` defined here

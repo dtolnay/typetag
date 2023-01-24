@@ -32,6 +32,7 @@ pub fn deserialize<'de, D, T>(
     deserializer: D,
     trait_object: &'static str,
     fields: &'static [&'static str],
+    default_variant: Option<&'static str>,
     registry: &'static Registry<T>,
 ) -> Result<Box<T>, D::Error>
 where
@@ -42,6 +43,7 @@ where
         trait_object,
         tag: fields[0],
         content: fields[1],
+        default_variant,
         registry,
     };
     deserializer.deserialize_struct(trait_object, fields, visitor)
@@ -51,6 +53,7 @@ struct TaggedVisitor<T: ?Sized + 'static> {
     trait_object: &'static str,
     tag: &'static str,
     content: &'static str,
+    default_variant: Option<&'static str>,
     registry: &'static Registry<T>,
 }
 
@@ -133,11 +136,26 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                         return Err(de::Error::duplicate_field(self.content));
                     }
                     // There is no second key.
-                    None => return Err(de::Error::missing_field(self.tag)),
+                    None => {
+                        if let Some(variant) = self.default_variant {
+                            // No variant is specified but there is a default variant.
+                            if let Some(Some(deserialize_fn)) = self.registry.map.get(variant) {
+                                let fn_apply = FnApply { deserialize_fn: *deserialize_fn };
+                                let content = content.into_deserializer();
+                                fn_apply.deserialize(content)?
+                            } else {
+                                // The default variant is not found in the registry.
+                                return Err(de::Error::unknown_variant(variant, &self.registry.names));
+                            }
+                        } else {
+                            // No variant is specified and there is no default variant.
+                            return Err(de::Error::missing_field(self.tag));
+                        }
+                    }
                 }
             }
             // There is no first key.
-            None => return Err(de::Error::missing_field(self.tag)),
+            None => return Err(de::Error::missing_field(self.content)),
         };
 
         match next_relevant_key(&mut map)? {

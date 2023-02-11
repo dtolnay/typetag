@@ -1,3 +1,5 @@
+#![allow(clippy::extra_unused_type_parameters)]
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

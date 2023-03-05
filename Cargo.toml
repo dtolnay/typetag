@@ -1,6 +1,6 @@
 [package]
 name = "typetag"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 categories = ["encoding", "no-std"]
 description = "Serde serializable and deserializable trait objects"
@@ -19,7 +19,7 @@ erased-serde = { version = "0.3", default-features = false, features = ["alloc"]
 inventory = "0.3"
 once_cell = { version = "1", default-features = false, features = ["alloc"] }
 serde = { version = "1", default-features = false, features = ["alloc", "derive"] }
-typetag-impl = { version = "=0.2.5", path = "impl" }
+typetag-impl = { version = "=0.2.6", path = "impl" }
 
 [dev-dependencies]
 bincode = "1"

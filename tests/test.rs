@@ -321,7 +321,7 @@ mod marker_traits {
     }
 
     #[test]
-    fn deserialize() {
+    fn test_deserialize() {
         assert_deserialize::<dyn Neither>();
 
         assert_deserialize::<dyn Sendable>();

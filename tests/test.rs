@@ -196,31 +196,31 @@ mod other_types {
     impl Trait for A {
         fn assert_is_a(&self) {}
         fn assert_is_b(&self) {
-            panic!("is A")
+            panic!("is A");
         }
         fn assert_is_c(&self) {
-            panic!("is A")
+            panic!("is A");
         }
     }
 
     #[typetag::serde]
     impl Trait for B {
         fn assert_is_a(&self) {
-            panic!("is B")
+            panic!("is B");
         }
         fn assert_is_b(&self) {}
         fn assert_is_c(&self) {
-            panic!("is B")
+            panic!("is B");
         }
     }
 
     #[typetag::serde]
     impl Trait for C {
         fn assert_is_a(&self) {
-            panic!("is C")
+            panic!("is C");
         }
         fn assert_is_b(&self) {
-            panic!("is C")
+            panic!("is C");
         }
         fn assert_is_c(&self) {}
     }

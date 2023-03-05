@@ -171,6 +171,103 @@ mod adjacently_tagged {
     }
 }
 
+mod other_types {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    struct A {}
+
+    #[derive(Serialize, Deserialize)]
+    struct B;
+
+    #[derive(Serialize, Deserialize)]
+    enum C {
+        Foo,
+    }
+
+    #[typetag::serde]
+    trait Trait {
+        fn assert_is_a(&self);
+        fn assert_is_b(&self);
+        fn assert_is_c(&self);
+    }
+
+    #[typetag::serde]
+    impl Trait for A {
+        fn assert_is_a(&self) {}
+        fn assert_is_b(&self) {
+            panic!("is A")
+        }
+        fn assert_is_c(&self) {
+            panic!("is A")
+        }
+    }
+
+    #[typetag::serde]
+    impl Trait for B {
+        fn assert_is_a(&self) {
+            panic!("is B")
+        }
+        fn assert_is_b(&self) {}
+        fn assert_is_c(&self) {
+            panic!("is B")
+        }
+    }
+
+    #[typetag::serde]
+    impl Trait for C {
+        fn assert_is_a(&self) {
+            panic!("is C")
+        }
+        fn assert_is_b(&self) {
+            panic!("is C")
+        }
+        fn assert_is_c(&self) {}
+    }
+
+    #[test]
+    fn test_json_round_trip() {
+        let trait_object = &A {} as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"A":{}}"#;
+        assert_eq!(json, expected);
+        let round_trip_object: Box<dyn Trait> = serde_json::from_str(&json).unwrap();
+        round_trip_object.assert_is_a();
+
+        let trait_object = &B as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"B":null}"#;
+        assert_eq!(json, expected);
+        let round_trip_object: Box<dyn Trait> = serde_json::from_str(&json).unwrap();
+        round_trip_object.assert_is_b();
+
+        let trait_object = &C::Foo as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"C":"Foo"}"#;
+        assert_eq!(json, expected);
+        let round_trip_object: Box<dyn Trait> = serde_json::from_str(&json).unwrap();
+        round_trip_object.assert_is_c();
+    }
+
+    #[test]
+    fn test_bincode_round_trip() {
+        let trait_object = &A {} as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_is_a();
+
+        let trait_object = &B as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_is_b();
+
+        let trait_object = &C::Foo as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_is_c();
+    }
+}
+
 mod marker_traits {
     use serde::de::DeserializeOwned;
     use serde::Serialize;

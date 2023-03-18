@@ -1,6 +1,6 @@
 [package]
 name = "typetag-impl"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 description = "Implementation detail of the typetag crate"
 documentation = "https://docs.rs/typetag"

@@ -140,12 +140,17 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                         if let Some(variant) = self.default_variant {
                             // No variant is specified but there is a default variant.
                             if let Some(Some(deserialize_fn)) = self.registry.map.get(variant) {
-                                let fn_apply = FnApply { deserialize_fn: *deserialize_fn };
+                                let fn_apply = FnApply {
+                                    deserialize_fn: *deserialize_fn,
+                                };
                                 let content = content.into_deserializer();
                                 fn_apply.deserialize(content)?
                             } else {
                                 // The default variant is not found in the registry.
-                                return Err(de::Error::unknown_variant(variant, &self.registry.names));
+                                return Err(de::Error::unknown_variant(
+                                    variant,
+                                    &self.registry.names,
+                                ));
                             }
                         } else {
                             // No variant is specified and there is no default variant.

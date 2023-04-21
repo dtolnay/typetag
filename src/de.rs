@@ -8,6 +8,14 @@ pub struct MapLookupVisitor<'a, T: ?Sized + 'static> {
     pub registry: &'static Registry<T>,
 }
 
+impl<'a, T: ?Sized + 'static> Copy for MapLookupVisitor<'a, T> {}
+
+impl<'a, T: ?Sized + 'static> Clone for MapLookupVisitor<'a, T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
 impl<'de, 'a, T: ?Sized + 'static> Visitor<'de> for MapLookupVisitor<'a, T> {
     type Value = DeserializeFn<T>;
 

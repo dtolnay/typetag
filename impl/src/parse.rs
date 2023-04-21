@@ -5,13 +5,14 @@ use syn::{Attribute, Error, ImplItem, ItemImpl, ItemTrait, LitStr, Token, TraitI
 mod kw {
     syn::custom_keyword!(tag);
     syn::custom_keyword!(content);
+    syn::custom_keyword!(default_variant);
     syn::custom_keyword!(name);
 }
 
 pub enum TraitArgs {
     External,
-    Internal { tag: LitStr },
-    Adjacent { tag: LitStr, content: LitStr },
+    Internal { tag: LitStr, default_variant: Option<LitStr> },
+    Adjacent { tag: LitStr, content: LitStr, default_variant: Option<LitStr> },
 }
 
 pub struct ImplArgs {
@@ -86,7 +87,9 @@ impl Parse for Input {
 
 // #[typetag::serde]
 // #[typetag::serde(tag = "type")]
+// #[typetag::serde(tag = "type", default_variant = "default")]
 // #[typetag::serde(tag = "type", content = "content")]
+// #[typetag::serde(tag = "type", content = "content", default_variant = "default")]
 impl Parse for TraitArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.is_empty() {
@@ -96,17 +99,33 @@ impl Parse for TraitArgs {
         input.parse::<Token![=]>()?;
         let tag: LitStr = input.parse()?;
         if input.is_empty() {
-            return Ok(TraitArgs::Internal { tag });
+            return Ok(TraitArgs::Internal { tag, default_variant: None });
         }
         input.parse::<Token![,]>()?;
         if input.is_empty() {
-            return Ok(TraitArgs::Internal { tag });
+            return Ok(TraitArgs::Internal { tag, default_variant: None });
+        }
+        if input.peek::<>(kw::default_variant) {
+            input.parse::<kw::default_variant>()?;
+            input.parse::<Token![=]>()?;
+            let default_variant: LitStr = input.parse()?;
+            input.parse::<Option<Token![,]>>()?;
+            if input.is_empty() {
+                return Ok(TraitArgs::Internal { tag, default_variant: Some(default_variant) });
+            }
         }
         input.parse::<kw::content>()?;
         input.parse::<Token![=]>()?;
         let content: LitStr = input.parse()?;
+        if input.is_empty() {
+            return Ok(TraitArgs::Adjacent { tag, content, default_variant: None });
+        }
+        input.parse::<Token![,]>()?;
+        input.parse::<kw::default_variant>()?;
+        input.parse::<Token![=]>()?;
+        let default_variant: LitStr = input.parse()?;
         input.parse::<Option<Token![,]>>()?;
-        Ok(TraitArgs::Adjacent { tag, content })
+        Ok(TraitArgs::Adjacent { tag, content, default_variant: Some(default_variant) })
     }
 }
 

@@ -268,6 +268,158 @@ mod other_types {
     }
 }
 
+mod internal_with_default {
+    use super::{A, B};
+
+    #[typetag::serde(tag = "type", default_variant = "A")]
+    trait Trait {
+        fn assert_a_is_11(&self);
+        fn assert_b_is_11(&self);
+    }
+
+    #[typetag::serde]
+    impl Trait for A {
+        fn assert_a_is_11(&self) {
+            assert_eq!(self.a, 11);
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+    }
+
+    #[typetag::serde]
+    impl Trait for B {
+        fn assert_a_is_11(&self) {
+            panic!("is not A!");
+        }
+        fn assert_b_is_11(&self) {
+            assert_eq!(self.b, 11);
+        }
+    }
+
+    #[test]
+    fn test_json_serialize_default_variant() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"type":"A","a":11}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_serialize_named_variant() {
+        let trait_object = &B { b: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"type":"B","b":11}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_deserialize_default_variant() {
+        let json = r#"{"a":11}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_a_is_11();
+    }
+
+    #[test]
+    fn test_json_deserialize_named_variant() {
+        let json = r#"{"type":"B","b":11}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_b_is_11();
+    }
+
+    #[test]
+    fn test_bincode_round_trip_default_variant() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_a_is_11();
+    }
+
+    #[test]
+    fn test_bincode_round_trip_named_variant() {
+        let trait_object = &B { b: 11 } as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_b_is_11();
+    }
+}
+
+mod adjacent_with_default {
+    use super::{A, B};
+
+    #[typetag::serde(tag = "type", content = "content", default_variant = "A")]
+    trait Trait {
+        fn assert_a_is_11(&self);
+        fn assert_b_is_11(&self);
+    }
+
+    #[typetag::serde]
+    impl Trait for A {
+        fn assert_a_is_11(&self) {
+            assert_eq!(self.a, 11);
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+    }
+
+    #[typetag::serde]
+    impl Trait for B {
+        fn assert_a_is_11(&self) {
+            panic!("is not A!");
+        }
+        fn assert_b_is_11(&self) {
+            assert_eq!(self.b, 11);
+        }
+    }
+
+    #[test]
+    fn test_json_serialize_default_variant() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"type":"A","content":{"a":11}}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_serialize_named_variant() {
+        let trait_object = &B { b: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"type":"B","content":{"b":11}}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_deserialize_default_variant() {
+        let json = r#"{"content":{"a":11}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_a_is_11();
+    }
+
+    #[test]
+    fn test_json_deserialize_named_variant() {
+        let json = r#"{"type":"B","content":{"b":11}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_b_is_11();
+    }
+
+    #[test]
+    fn test_bincode_round_trip_default_variant() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_a_is_11();
+    }
+
+    #[test]
+    fn test_bincode_round_trip_named_variant() {
+        let trait_object = &B { b: 11 } as &dyn Trait;
+        let bytes = bincode::serialize(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        trait_object.assert_b_is_11();
+    }
+}
+
 mod marker_traits {
     use serde::de::DeserializeOwned;
     use serde::Serialize;

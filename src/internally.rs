@@ -36,6 +36,7 @@ pub fn deserialize<'de, D, T>(
     deserializer: D,
     trait_object: &'static str,
     tag: &'static str,
+    default_variant: Option<&'static str>,
     registry: &'static Registry<T>,
 ) -> Result<Box<T>, D::Error>
 where
@@ -45,6 +46,7 @@ where
     let visitor = TaggedVisitor {
         trait_object,
         tag,
+        default_variant,
         registry,
     };
     deserializer.deserialize_map(visitor)
@@ -55,6 +57,7 @@ pub(crate) const DEFAULT_KEY: &str = "value";
 struct TaggedVisitor<T: ?Sized + 'static> {
     trait_object: &'static str,
     tag: &'static str,
+    default_variant: Option<&'static str>,
     registry: &'static Registry<T>,
 }
 
@@ -111,7 +114,14 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
 
         let deserialize_fn = match deserialize_fn {
             Some(deserialize_fn) => deserialize_fn,
-            None => return Err(de::Error::missing_field(self.tag)),
+            None => match self.default_variant {
+                Some(variant) => if let Some(Some(deserialize_fn)) = self.registry.map.get(variant) {
+                    *deserialize_fn
+                } else {
+                    return Err(de::Error::unknown_variant(variant, &self.registry.names));
+                },
+                None => return Err(de::Error::missing_field(self.tag)),
+            }
         };
 
         let fn_apply = FnApply { deserialize_fn };

@@ -14,8 +14,8 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
     let (serialize_impl, deserialize_impl) = match args {
         TraitArgs::External => externally_tagged(&input),
-        TraitArgs::Internal { tag } => internally_tagged(tag, &input),
-        TraitArgs::Adjacent { tag, content } => adjacently_tagged(tag, content, &input),
+        TraitArgs::Internal { tag, default_variant } => internally_tagged(tag, default_variant, &input),
+        TraitArgs::Adjacent { tag, content, default_variant } => adjacently_tagged(tag, content, default_variant, &input),
     };
 
     let object = &input.ident;
@@ -194,11 +194,15 @@ fn externally_tagged(input: &ItemTrait) -> (TokenStream, TokenStream) {
     (serialize_impl, deserialize_impl)
 }
 
-fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStream) {
+fn internally_tagged(tag: LitStr, default_variant: Option<LitStr>, input: &ItemTrait) -> (TokenStream, TokenStream) {
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let static_registry = static_registry();
+    let default_variant_literal = match default_variant {
+        Some(ref variant) => quote!(Some(#variant)),
+        None => quote!(None),
+    };
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
@@ -207,7 +211,7 @@ fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStrea
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::__private::internally::deserialize(deserializer, #object_name, #tag, registry)
+        typetag::__private::internally::deserialize(deserializer, #object_name, #tag, #default_variant_literal, registry)
     };
 
     (serialize_impl, deserialize_impl)
@@ -216,12 +220,17 @@ fn internally_tagged(tag: LitStr, input: &ItemTrait) -> (TokenStream, TokenStrea
 fn adjacently_tagged(
     tag: LitStr,
     content: LitStr,
+    default_variant: Option<LitStr>,
     input: &ItemTrait,
 ) -> (TokenStream, TokenStream) {
     let object = &input.ident;
     let object_name = object.to_string();
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let static_registry = static_registry();
+    let default_variant_literal = match default_variant {
+        Some(ref variant) => quote!(Some(#variant)),
+        None => quote!(None),
+    };
 
     let serialize_impl = quote! {
         let name = <Self as #object #ty_generics>::typetag_name(self);
@@ -230,7 +239,7 @@ fn adjacently_tagged(
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::__private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], registry)
+        typetag::__private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], #default_variant_literal, registry)
     };
 
     (serialize_impl, deserialize_impl)

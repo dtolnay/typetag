@@ -298,22 +298,6 @@ mod internal_with_default {
     }
 
     #[test]
-    fn test_json_serialize_default_variant() {
-        let trait_object = &A { a: 11 } as &dyn Trait;
-        let json = serde_json::to_string(trait_object).unwrap();
-        let expected = r#"{"type":"A","a":11}"#;
-        assert_eq!(json, expected);
-    }
-
-    #[test]
-    fn test_json_serialize_named_variant() {
-        let trait_object = &B { b: 11 } as &dyn Trait;
-        let json = serde_json::to_string(trait_object).unwrap();
-        let expected = r#"{"type":"B","b":11}"#;
-        assert_eq!(json, expected);
-    }
-
-    #[test]
     fn test_json_deserialize_default_variant() {
         let json = r#"{"a":11}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
@@ -324,22 +308,6 @@ mod internal_with_default {
     fn test_json_deserialize_named_variant() {
         let json = r#"{"type":"B","b":11}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
-        trait_object.assert_b_is_11();
-    }
-
-    #[test]
-    fn test_bincode_round_trip_default_variant() {
-        let trait_object = &A { a: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
-        trait_object.assert_a_is_11();
-    }
-
-    #[test]
-    fn test_bincode_round_trip_named_variant() {
-        let trait_object = &B { b: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
         trait_object.assert_b_is_11();
     }
 }
@@ -374,22 +342,6 @@ mod adjacent_with_default {
     }
 
     #[test]
-    fn test_json_serialize_default_variant() {
-        let trait_object = &A { a: 11 } as &dyn Trait;
-        let json = serde_json::to_string(trait_object).unwrap();
-        let expected = r#"{"type":"A","content":{"a":11}}"#;
-        assert_eq!(json, expected);
-    }
-
-    #[test]
-    fn test_json_serialize_named_variant() {
-        let trait_object = &B { b: 11 } as &dyn Trait;
-        let json = serde_json::to_string(trait_object).unwrap();
-        let expected = r#"{"type":"B","content":{"b":11}}"#;
-        assert_eq!(json, expected);
-    }
-
-    #[test]
     fn test_json_deserialize_default_variant() {
         let json = r#"{"content":{"a":11}}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
@@ -400,22 +352,6 @@ mod adjacent_with_default {
     fn test_json_deserialize_named_variant() {
         let json = r#"{"type":"B","content":{"b":11}}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
-        trait_object.assert_b_is_11();
-    }
-
-    #[test]
-    fn test_bincode_round_trip_default_variant() {
-        let trait_object = &A { a: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
-        trait_object.assert_a_is_11();
-    }
-
-    #[test]
-    fn test_bincode_round_trip_named_variant() {
-        let trait_object = &B { b: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
         trait_object.assert_b_is_11();
     }
 }

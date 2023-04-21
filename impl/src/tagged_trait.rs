@@ -211,8 +211,8 @@ fn internally_tagged(
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let static_registry = static_registry();
     let default_variant_literal = match default_variant {
-        Some(variant) => quote!(Some(#variant)),
-        None => quote!(None),
+        Some(variant) => quote!(typetag::__private::Option::Some(#variant)),
+        None => quote!(typetag::__private::Option::None),
     };
 
     let serialize_impl = quote! {
@@ -239,8 +239,8 @@ fn adjacently_tagged(
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let static_registry = static_registry();
     let default_variant_literal = match default_variant {
-        Some(variant) => quote!(Some(#variant)),
-        None => quote!(None),
+        Some(variant) => quote!(typetag::__private::Option::Some(#variant)),
+        None => quote!(typetag::__private::Option::None),
     };
 
     let serialize_impl = quote! {

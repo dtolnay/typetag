@@ -102,54 +102,57 @@ impl Parse for TraitArgs {
         if input.is_empty() {
             return Ok(TraitArgs::External);
         }
+
         input.parse::<kw::tag>()?;
         input.parse::<Token![=]>()?;
         let tag: LitStr = input.parse()?;
+        if !input.is_empty() {
+            input.parse::<Token![,]>()?;
+        }
         if input.is_empty() {
             return Ok(TraitArgs::Internal {
                 tag,
                 default_variant: None,
             });
         }
-        input.parse::<Token![,]>()?;
-        if input.is_empty() {
-            return Ok(TraitArgs::Internal {
-                tag,
-                default_variant: None,
-            });
-        }
-        if input.peek(kw::default_variant) {
+
+        let lookahead = input.lookahead1();
+        if lookahead.peek(kw::content) {
+            input.parse::<kw::content>()?;
+            input.parse::<Token![=]>()?;
+            let content: LitStr = input.parse()?;
+            if !input.is_empty() {
+                input.parse::<Token![,]>()?;
+            }
+            if input.is_empty() {
+                return Ok(TraitArgs::Adjacent {
+                    tag,
+                    content,
+                    default_variant: None,
+                });
+            }
+
             input.parse::<kw::default_variant>()?;
             input.parse::<Token![=]>()?;
             let default_variant: LitStr = input.parse()?;
             input.parse::<Option<Token![,]>>()?;
-            if input.is_empty() {
-                return Ok(TraitArgs::Internal {
-                    tag,
-                    default_variant: Some(default_variant),
-                });
-            }
-        }
-        input.parse::<kw::content>()?;
-        input.parse::<Token![=]>()?;
-        let content: LitStr = input.parse()?;
-        if input.is_empty() {
-            return Ok(TraitArgs::Adjacent {
+            Ok(TraitArgs::Adjacent {
                 tag,
                 content,
-                default_variant: None,
+                default_variant: Some(default_variant),
+            })
+        } else if lookahead.peek(kw::default_variant) {
+            input.parse::<kw::default_variant>()?;
+            input.parse::<Token![=]>()?;
+            let default_variant: LitStr = input.parse()?;
+            input.parse::<Option<Token![,]>>()?;
+            return Ok(TraitArgs::Internal {
+                tag,
+                default_variant: Some(default_variant),
             });
+        } else {
+            Err(lookahead.error())
         }
-        input.parse::<Token![,]>()?;
-        input.parse::<kw::default_variant>()?;
-        input.parse::<Token![=]>()?;
-        let default_variant: LitStr = input.parse()?;
-        input.parse::<Option<Token![,]>>()?;
-        Ok(TraitArgs::Adjacent {
-            tag,
-            content,
-            default_variant: Some(default_variant),
-        })
     }
 }
 

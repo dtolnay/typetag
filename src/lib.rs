@@ -297,7 +297,7 @@
 //! [`erased-serde`]: https://github.com/dtolnay/erased-serde
 
 #![no_std]
-#![doc(html_root_url = "https://docs.rs/typetag/0.2.7")]
+#![doc(html_root_url = "https://docs.rs/typetag/0.2.8")]
 #![allow(
     clippy::missing_errors_doc,
     clippy::module_name_repetitions,

@@ -150,7 +150,14 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                 }
             }
             // There is no first key.
-            None => return Err(de::Error::missing_field(self.content)),
+            None => {
+                let missing_field = if self.default_variant.is_none() {
+                    self.tag
+                } else {
+                    self.content
+                };
+                return Err(de::Error::missing_field(missing_field));
+            }
         };
 
         match next_relevant_key(&mut map)? {

@@ -115,13 +115,7 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
         let deserialize_fn = match deserialize_fn {
             Some(deserialize_fn) => deserialize_fn,
             None => match self.default_variant {
-                Some(variant) => {
-                    if let Some(Some(deserialize_fn)) = self.registry.map.get(variant) {
-                        *deserialize_fn
-                    } else {
-                        return Err(de::Error::unknown_variant(variant, &self.registry.names));
-                    }
-                }
+                Some(variant) => map_lookup.visit_str(variant)?,
                 None => return Err(de::Error::missing_field(self.tag)),
             },
         };

@@ -211,7 +211,7 @@ fn internally_tagged(
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let static_registry = static_registry();
     let default_variant_literal = match default_variant {
-        Some(ref variant) => quote!(Some(#variant)),
+        Some(variant) => quote!(Some(#variant)),
         None => quote!(None),
     };
 
@@ -239,7 +239,7 @@ fn adjacently_tagged(
     let (_, ty_generics, _) = input.generics.split_for_impl();
     let static_registry = static_registry();
     let default_variant_literal = match default_variant {
-        Some(ref variant) => quote!(Some(#variant)),
+        Some(variant) => quote!(Some(#variant)),
         None => quote!(None),
     };
 

@@ -1,7 +1,7 @@
 use crate::content::Content;
 use crate::de::{FnApply, MapLookupVisitor};
 use crate::private::Registry;
-use crate::ser::{TaggedSerializer, Wrap};
+use crate::ser::{InternallyTaggedSerializer, Wrap};
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -24,7 +24,7 @@ where
     S: Serializer,
     T: ?Sized + erased_serde::Serialize,
 {
-    let adapter = TaggedSerializer {
+    let adapter = InternallyTaggedSerializer {
         tag,
         variant,
         delegate: serializer,

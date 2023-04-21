@@ -23,13 +23,13 @@ where
     }
 }
 
-pub struct TaggedSerializer<S> {
+pub struct InternallyTaggedSerializer<S> {
     pub tag: &'static str,
     pub variant: &'static str,
     pub delegate: S,
 }
 
-impl<S> TaggedSerializer<S>
+impl<S> InternallyTaggedSerializer<S>
 where
     S: Serializer,
 {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<S> Serializer for TaggedSerializer<S>
+impl<S> Serializer for InternallyTaggedSerializer<S>
 where
     S: Serializer,
 {

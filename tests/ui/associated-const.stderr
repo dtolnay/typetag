@@ -1,5 +1,10 @@
 error: typetag trait with associated const is not supported yet
  --> tests/ui/associated-const.rs:3:5
   |
+1 | #[typetag::serde]
+  | ----------------- in this procedural macro expansion
+2 | pub trait Trait {
 3 |     const ASSOC: u8;
   |     ^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `typetag::serde` (in Nightly builds, run with -Z macro-backtrace for more info)

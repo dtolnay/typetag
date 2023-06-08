@@ -1,11 +1,19 @@
 error: deserialization of generic traits is not supported yet; use #[typetag::serialize] to generate serialization only
  --> tests/ui/deserialize-generic.rs:2:16
   |
+1 | #[typetag::serde]
+  | ----------------- in this procedural macro expansion
 2 | pub trait Trait<T> {}
   |                ^^^
+  |
+  = note: this error originates in the attribute macro `typetag::serde` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error: deserialization of generic impls is not supported yet; use #[typetag::serialize] to generate serialization only
  --> tests/ui/deserialize-generic.rs:7:5
   |
+6 | #[typetag::serde]
+  | ----------------- in this procedural macro expansion
 7 | impl<T> Trait<T> for Struct {}
   |     ^^^
+  |
+  = note: this error originates in the attribute macro `typetag::serde` (in Nightly builds, run with -Z macro-backtrace for more info)

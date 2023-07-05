@@ -57,10 +57,10 @@ mod externally_tagged {
     }
 
     #[test]
-    fn test_bincode_round_trip() {
+    fn test_postcard_round_trip() {
         let trait_object = &A { a: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_stdvec(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = postcard::from_bytes(&bytes).unwrap();
         trait_object.assert_a_is_11();
     }
 }
@@ -110,10 +110,10 @@ mod internally_tagged {
     }
 
     #[test]
-    fn test_bincode_round_trip() {
+    fn test_postcard_round_trip() {
         let trait_object = &A { a: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_stdvec(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = postcard::from_bytes(&bytes).unwrap();
         trait_object.assert_a_is_11();
     }
 }
@@ -163,10 +163,10 @@ mod adjacently_tagged {
     }
 
     #[test]
-    fn test_bincode_round_trip() {
+    fn test_postcard_round_trip() {
         let trait_object = &A { a: 11 } as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_stdvec(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = postcard::from_bytes(&bytes).unwrap();
         trait_object.assert_a_is_11();
     }
 }
@@ -250,20 +250,20 @@ mod other_types {
     }
 
     #[test]
-    fn test_bincode_round_trip() {
+    fn test_postcard_round_trip() {
         let trait_object = &A {} as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_stdvec(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = postcard::from_bytes(&bytes).unwrap();
         trait_object.assert_is_a();
 
         let trait_object = &B as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_stdvec(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = postcard::from_bytes(&bytes).unwrap();
         trait_object.assert_is_b();
 
         let trait_object = &C::Foo as &dyn Trait;
-        let bytes = bincode::serialize(trait_object).unwrap();
-        let trait_object: Box<dyn Trait> = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_stdvec(trait_object).unwrap();
+        let trait_object: Box<dyn Trait> = postcard::from_bytes(&bytes).unwrap();
         trait_object.assert_is_c();
     }
 }

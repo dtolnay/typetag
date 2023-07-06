@@ -4,7 +4,7 @@ version = "0.2.9"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 description = "Implementation detail of the typetag crate"
 documentation = "https://docs.rs/typetag"
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/typetag"
 

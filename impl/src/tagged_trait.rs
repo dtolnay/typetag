@@ -22,7 +22,8 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
             tag,
             content,
             default_variant,
-        } => adjacently_tagged(tag, content, default_variant, &input),
+            deny_unknown_fields,
+        } => adjacently_tagged(tag, content, default_variant, deny_unknown_fields, &input),
     };
 
     let object = &input.ident;
@@ -232,6 +233,7 @@ fn adjacently_tagged(
     tag: LitStr,
     content: LitStr,
     default_variant: Option<LitStr>,
+    deny_unknown_fields: bool,
     input: &ItemTrait,
 ) -> (TokenStream, TokenStream) {
     let object = &input.ident;
@@ -250,7 +252,14 @@ fn adjacently_tagged(
 
     let deserialize_impl = quote! {
         #static_registry
-        typetag::__private::adjacently::deserialize(deserializer, #object_name, &[#tag, #content], #default_variant_literal, registry)
+        typetag::__private::adjacently::deserialize(
+            deserializer,
+            #object_name,
+            &[#tag, #content],
+            #default_variant_literal,
+            registry,
+            #deny_unknown_fields,
+        )
     };
 
     (serialize_impl, deserialize_impl)

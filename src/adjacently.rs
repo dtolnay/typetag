@@ -31,9 +31,10 @@ where
 pub fn deserialize<'de, D, T>(
     deserializer: D,
     trait_object: &'static str,
-    fields: &'static [&'static str],
+    field_names: &'static [&'static str; 2], // [tag, content]
     default_variant: Option<&'static str>,
     registry: &'static Registry<T>,
+    deny_unknown_fields: bool,
 ) -> Result<Box<T>, D::Error>
 where
     D: Deserializer<'de>,
@@ -41,20 +42,20 @@ where
 {
     let visitor = TaggedVisitor {
         trait_object,
-        tag: fields[0],
-        content: fields[1],
+        field_names,
         default_variant,
         registry,
+        deny_unknown_fields,
     };
-    deserializer.deserialize_struct(trait_object, fields, visitor)
+    deserializer.deserialize_struct(trait_object, field_names, visitor)
 }
 
 struct TaggedVisitor<T: ?Sized + 'static> {
     trait_object: &'static str,
-    tag: &'static str,
-    content: &'static str,
+    field_names: &'static [&'static str; 2], // [tag, content]
     default_variant: Option<&'static str>,
     registry: &'static Registry<T>,
+    deny_unknown_fields: bool,
 }
 
 impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
@@ -74,8 +75,8 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
         };
 
         let field_seed = TagContentOtherFieldVisitor {
-            tag: self.tag,
-            content: self.content,
+            field_names: self.field_names,
+            deny_unknown_fields: self.deny_unknown_fields,
         };
 
         let next_relevant_key = |map: &mut A| {
@@ -92,6 +93,8 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
             Ok(None)
         };
 
+        let [tag_field_name, content_field_name] = *self.field_names;
+
         // Visit the first relevant key.
         let ret = match next_relevant_key(&mut map)? {
             // First key is the tag.
@@ -102,7 +105,7 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                 match next_relevant_key(&mut map)? {
                     // Second key is a duplicate of the tag.
                     Some(TagOrContentField::Tag) => {
-                        return Err(de::Error::duplicate_field(self.tag));
+                        return Err(de::Error::duplicate_field(tag_field_name));
                     }
                     // Second key is the content.
                     Some(TagOrContentField::Content) => {
@@ -133,7 +136,7 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                     }
                     // Second key is a duplicate of the content.
                     Some(TagOrContentField::Content) => {
-                        return Err(de::Error::duplicate_field(self.content));
+                        return Err(de::Error::duplicate_field(content_field_name));
                     }
                     // There is no second key.
                     None => {
@@ -144,7 +147,7 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                             fn_apply.deserialize(content)?
                         } else {
                             // No variant is specified and there is no default variant.
-                            return Err(de::Error::missing_field(self.tag));
+                            return Err(de::Error::missing_field(tag_field_name));
                         }
                     }
                 }
@@ -152,17 +155,17 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
             // There is no first key.
             None => {
                 let missing_field = if self.default_variant.is_none() {
-                    self.tag
+                    tag_field_name
                 } else {
-                    self.content
+                    content_field_name
                 };
                 return Err(de::Error::missing_field(missing_field));
             }
         };
 
         match next_relevant_key(&mut map)? {
-            Some(TagOrContentField::Tag) => Err(de::Error::duplicate_field(self.tag)),
-            Some(TagOrContentField::Content) => Err(de::Error::duplicate_field(self.content)),
+            Some(TagOrContentField::Tag) => Err(de::Error::duplicate_field(tag_field_name)),
+            Some(TagOrContentField::Content) => Err(de::Error::duplicate_field(content_field_name)),
             None => Ok(ret),
         }
     }
@@ -204,8 +207,8 @@ enum TagContentOtherField {
 
 #[derive(Copy, Clone)]
 struct TagContentOtherFieldVisitor {
-    tag: &'static str,
-    content: &'static str,
+    field_names: &'static [&'static str; 2], // [tag, content]
+    deny_unknown_fields: bool,
 }
 
 impl<'de> DeserializeSeed<'de> for TagContentOtherFieldVisitor {
@@ -223,21 +226,33 @@ impl<'de> Visitor<'de> for TagContentOtherFieldVisitor {
     type Value = TagContentOtherField;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            formatter,
-            "{:?}, {:?}, or other ignored fields",
-            self.tag, self.content
-        )
+        let [tag_field_name, content_field_name] = *self.field_names;
+        if self.deny_unknown_fields {
+            write!(
+                formatter,
+                "{:?} or {:?}",
+                tag_field_name, content_field_name,
+            )
+        } else {
+            write!(
+                formatter,
+                "{:?}, {:?}, or other ignored fields",
+                tag_field_name, content_field_name,
+            )
+        }
     }
 
     fn visit_str<E>(self, field: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
-        if field == self.tag {
+        let [tag_field_name, content_field_name] = *self.field_names;
+        if field == tag_field_name {
             Ok(TagContentOtherField::Tag)
-        } else if field == self.content {
+        } else if field == content_field_name {
             Ok(TagContentOtherField::Content)
+        } else if self.deny_unknown_fields {
+            Err(E::unknown_field(field, self.field_names))
         } else {
             Ok(TagContentOtherField::Other)
         }

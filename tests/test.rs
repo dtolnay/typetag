@@ -160,6 +160,10 @@ mod adjacently_tagged {
         let json = r#"{"type":"B","content":{"b":11}}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
+
+        let json = r#"{"type":"B","content":{"b":11},"unknown":null}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        trait_object.assert_b_is_11();
     }
 
     #[test]
@@ -353,6 +357,32 @@ mod adjacent_with_default {
         let json = r#"{"type":"B","content":{"b":11}}"#;
         let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
         trait_object.assert_b_is_11();
+    }
+}
+
+mod adjacent_deny_unknown {
+    use super::{A, B};
+
+    #[typetag::serde(tag = "type", content = "content", deny_unknown_fields)]
+    trait Trait {}
+
+    #[typetag::serde]
+    impl Trait for A {}
+
+    #[typetag::serde]
+    impl Trait for B {}
+
+    #[test]
+    fn test_json_deserialize_deny_unknown() {
+        let json = r#"{"type":"B","content":{"b":11},"unknown":null}"#;
+        match serde_json::from_str::<Box<dyn Trait>>(json) {
+            Ok(_) => panic!("unexpectedly deserialized successfully despite unknown field"),
+            Err(err) => {
+                let expected =
+                    "unknown field `unknown`, expected `type` or `content` at line 1 column 40";
+                assert_eq!(err.to_string(), expected);
+            }
+        }
     }
 }
 

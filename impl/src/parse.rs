@@ -6,6 +6,7 @@ mod kw {
     syn::custom_keyword!(tag);
     syn::custom_keyword!(content);
     syn::custom_keyword!(default_variant);
+    syn::custom_keyword!(deny_unknown_fields);
     syn::custom_keyword!(name);
 }
 
@@ -19,6 +20,7 @@ pub enum TraitArgs {
         tag: LitStr,
         content: LitStr,
         default_variant: Option<LitStr>,
+        deny_unknown_fields: bool,
     },
 }
 
@@ -96,6 +98,7 @@ impl Parse for Input {
 // #[typetag::serde(tag = "type")]
 // #[typetag::serde(tag = "type", default_variant = "default")]
 // #[typetag::serde(tag = "type", content = "content")]
+// #[typetag::serde(tag = "type", content = "content", deny_unknown_fields)]
 // #[typetag::serde(tag = "type", content = "content", default_variant = "default")]
 impl Parse for TraitArgs {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -124,22 +127,31 @@ impl Parse for TraitArgs {
             if !input.is_empty() {
                 input.parse::<Token![,]>()?;
             }
-            if input.is_empty() {
-                return Ok(TraitArgs::Adjacent {
-                    tag,
-                    content,
-                    default_variant: None,
-                });
+
+            let mut default_variant = None;
+            let mut deny_unknown_fields = false;
+            while !input.is_empty() {
+                let lookahead = input.lookahead1();
+                if default_variant.is_none() && lookahead.peek(kw::default_variant) {
+                    input.parse::<kw::default_variant>()?;
+                    input.parse::<Token![=]>()?;
+                    default_variant = Some(input.parse()?);
+                } else if !deny_unknown_fields && lookahead.peek(kw::deny_unknown_fields) {
+                    input.parse::<kw::deny_unknown_fields>()?;
+                    deny_unknown_fields = true;
+                } else {
+                    return Err(lookahead.error());
+                }
+                if !input.is_empty() {
+                    input.parse::<Token![,]>()?;
+                }
             }
 
-            input.parse::<kw::default_variant>()?;
-            input.parse::<Token![=]>()?;
-            let default_variant: LitStr = input.parse()?;
-            input.parse::<Option<Token![,]>>()?;
             Ok(TraitArgs::Adjacent {
                 tag,
                 content,
-                default_variant: Some(default_variant),
+                default_variant,
+                deny_unknown_fields,
             })
         } else if lookahead.peek(kw::default_variant) {
             input.parse::<kw::default_variant>()?;

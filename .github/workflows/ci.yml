@@ -44,7 +44,7 @@ jobs:
           toolchain: ${{matrix.rust}}
       - name: Enable type layout randomization
         run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
-        if: startsWith(matrix.rust, 'nightly') && false # FIXME https://github.com/rust-lang/rust/issues/113941
+        if: startsWith(matrix.rust, 'nightly')
       - run: cargo test
 
   minimal:

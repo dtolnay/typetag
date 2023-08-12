@@ -356,7 +356,7 @@ where
     {
         match self.map.next_key_seed(DefaultKey)? {
             None => visitor.visit_none(),
-            Some(_) => visitor.visit_some(MapValueAsDeserializer { map: self.map }),
+            Some(()) => visitor.visit_some(MapValueAsDeserializer { map: self.map }),
         }
     }
 

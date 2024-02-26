@@ -112,7 +112,14 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
         }
     }
 
-    wrap_in_dummy_const(input, expanded)
+    quote! {
+        #input
+
+        #[allow(non_upper_case_globals)]
+        const _: () = {
+            #expanded
+        };
+    }
 }
 
 fn augment_trait(input: &mut ItemTrait, mode: Mode) {
@@ -276,15 +283,4 @@ fn has_supertrait(input: &ItemTrait, find: &str) -> bool {
         }
     }
     false
-}
-
-fn wrap_in_dummy_const(input: ItemTrait, expanded: TokenStream) -> TokenStream {
-    quote! {
-        #input
-
-        #[allow(non_upper_case_globals)]
-        const _: () = {
-            #expanded
-        };
-    }
 }

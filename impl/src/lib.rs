@@ -1,5 +1,9 @@
 #![recursion_limit = "256"]
-#![allow(clippy::needless_pass_by_value, clippy::single_match_else)]
+#![allow(
+    clippy::needless_pass_by_value,
+    clippy::single_match_else,
+    clippy::too_many_lines
+)]
 
 mod parse;
 mod tagged_impl;

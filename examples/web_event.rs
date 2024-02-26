@@ -1,5 +1,7 @@
 // cargo run --example web_event
 
+#![allow(unknown_lints, non_local_definitions)] // FIXME
+
 use serde::{Deserialize, Serialize};
 
 #[typetag::serde(tag = "type")]

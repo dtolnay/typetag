@@ -1,4 +1,5 @@
 #![allow(clippy::extra_unused_type_parameters)]
+#![allow(unknown_lints, non_local_definitions)] // FIXME
 
 use serde::{Deserialize, Serialize};
 

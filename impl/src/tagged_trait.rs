@@ -85,6 +85,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
                 type Object = dyn #object + #strictest;
             }
 
+            #[allow(unknown_lints, non_local_definitions)] // false positive: https://github.com/rust-lang/rust/issues/121621
             impl<'de> typetag::__private::serde::Deserialize<'de> for typetag::__private::Box<dyn #object + #strictest> {
                 fn deserialize<D>(deserializer: D) -> typetag::__private::Result<Self, D::Error>
                 where
@@ -97,6 +98,7 @@ pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> Token
 
         for marker_traits in others {
             expanded.extend(quote! {
+                #[allow(unknown_lints, non_local_definitions)] // false positive: https://github.com/rust-lang/rust/issues/121621
                 impl<'de> typetag::__private::serde::Deserialize<'de> for typetag::__private::Box<dyn #object + #marker_traits> {
                     fn deserialize<D>(deserializer: D) -> typetag::__private::Result<Self, D::Error>
                     where

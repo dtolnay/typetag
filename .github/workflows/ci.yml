@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [nightly, beta, stable, 1.62.0]
+        rust: [nightly, beta, stable, 1.70.0]
         os: [ubuntu]
         include:
           - name: macOS
@@ -46,6 +46,17 @@ jobs:
         run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
         if: startsWith(matrix.rust, 'nightly')
       - run: cargo test
+
+  msrv:
+    name: Rust 1.62.0
+    needs: pre_ci
+    if: needs.pre_ci.outputs.continue
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.62.0
+      - run: cargo check
 
   minimal:
     name: Minimal versions

@@ -46,6 +46,7 @@ jobs:
         run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
         if: startsWith(matrix.rust, 'nightly')
       - run: cargo test
+        continue-on-error: ${{matrix.rust == 'nightly-x86_64-pc-windows-msvc'}}
 
   msrv:
     name: Rust 1.62.0

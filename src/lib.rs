@@ -312,6 +312,7 @@ mod content;
 mod de;
 mod externally;
 mod internally;
+mod is_serialize_str;
 mod ser;
 
 use self::__private as private;

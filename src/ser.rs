@@ -1,4 +1,5 @@
 use crate::internally::DEFAULT_KEY;
+use crate::is_serialize_str::is_serialize_str;
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -234,7 +235,7 @@ where
     ) -> Result<Self::SerializeStruct, Self::Error> {
         let mut state = self.delegate.serialize_map(Some(len + 1))?;
         state.serialize_entry(self.tag, self.variant)?;
-        Ok(SerializeStructAsMap::new(state, self.tag))
+        Ok(SerializeStructAsMap::new(state, self.tag, self.variant))
     }
 
     fn serialize_struct_variant(
@@ -388,11 +389,12 @@ where
 pub struct SerializeStructAsMap<M> {
     map: M,
     tag: &'static str,
+    variant: &'static str,
 }
 
 impl<M> SerializeStructAsMap<M> {
-    fn new(map: M, tag: &'static str) -> Self {
-        SerializeStructAsMap { map, tag }
+    fn new(map: M, tag: &'static str, variant: &'static str) -> Self {
+        SerializeStructAsMap { map, tag, variant }
     }
 }
 
@@ -408,8 +410,7 @@ where
         T: ?Sized + Serialize,
     {
         if key == self.tag {
-            // I would have liked to require value to be a &str or String, and equal to
-            // the variant, but I don't know how to do it without specialization.
+            assert!(is_serialize_str(value, self.variant));
             Ok(())
         } else {
             self.map.serialize_entry(key, value)

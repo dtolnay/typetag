@@ -525,3 +525,37 @@ mod trait_hierarchy {
     #[typetag::serde]
     impl Derived for SomeDerived {}
 }
+
+mod tag_mismatch {
+    use serde::Serialize;
+
+    #[typetag::serialize(tag = "type")]
+    trait Trait {}
+
+    #[derive(Serialize)]
+    struct Tagged<T> {
+        #[serde(rename = "type")]
+        t: T,
+    }
+
+    #[typetag::serialize]
+    impl<T: Serialize> Trait for Tagged<T> {}
+
+    #[test]
+    fn test_json_serialize() {
+        let trait_object = &Tagged { t: "Tagged" } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"type":"Tagged"}"#;
+        assert_eq!(json, expected);
+
+        let trait_object = &Tagged { t: "Mismatch" } as &dyn Trait;
+        let err = serde_json::to_string(trait_object).unwrap_err();
+        let expected = r#"mismatched value for tag "type": "Tagged" vs "Mismatch""#;
+        assert_eq!(err.to_string(), expected);
+
+        let trait_object = &Tagged { t: false } as &dyn Trait;
+        let err = serde_json::to_string(trait_object).unwrap_err();
+        let expected = r#"mismatched value for tag "type": "Tagged" vs non-string"#;
+        assert_eq!(err.to_string(), expected);
+    }
+}

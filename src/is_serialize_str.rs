@@ -4,7 +4,7 @@
 //! whether a single method, `serialize_str`, is called with a given string.
 
 use core::fmt::{self, Display};
-use serde::ser::{self, Impossible, Serialize};
+use serde::ser::{self, Error, Impossible, Serialize, StdError};
 
 pub fn is_serialize_str<T: ?Sized + Serialize>(value: &T, expected_str: &'static str) -> bool {
     match value.serialize(Serializer { expected_str }) {
@@ -22,13 +22,13 @@ enum SerializerState {
     GotUnexpected,
 }
 
-impl serde::ser::Error for SerializerState {
+impl Error for SerializerState {
     fn custom<M: Display>(_message: M) -> Self {
         SerializerState::GotUnexpected
     }
 }
 
-impl serde::ser::StdError for SerializerState {}
+impl StdError for SerializerState {}
 
 impl Display for SerializerState {
     fn fmt(&self, _formatter: &mut fmt::Formatter) -> fmt::Result {

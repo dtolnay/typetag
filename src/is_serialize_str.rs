@@ -32,11 +32,13 @@ impl Serializer {
         }
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn unexpected(&mut self) -> Res {
         self.state = GotUnexpected;
         Ok(())
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn unexpected2(&mut self) -> Result<&mut Self, Error> {
         self.state = GotUnexpected;
         Ok(self)

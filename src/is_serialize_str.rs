@@ -96,8 +96,8 @@ impl ser::Serializer for Serializer {
         Err(SerializerState::Unexpected)
     }
 
-    fn serialize_char(self, _: char) -> Result<Self::Ok, Self::Error> {
-        Err(SerializerState::Unexpected)
+    fn serialize_char(self, ch: char) -> Result<Self::Ok, Self::Error> {
+        self.serialize_str(ch.encode_utf8(&mut [0u8; 4]))
     }
 
     fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
@@ -116,8 +116,8 @@ impl ser::Serializer for Serializer {
         Err(SerializerState::Unexpected)
     }
 
-    fn serialize_some<T: ?Sized + Serialize>(self, _: &T) -> Result<Self::Ok, Self::Error> {
-        Err(SerializerState::Unexpected)
+    fn serialize_some<T: ?Sized + Serialize>(self, value: &T) -> Result<Self::Ok, Self::Error> {
+        value.serialize(self)
     }
 
     fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
@@ -140,9 +140,9 @@ impl ser::Serializer for Serializer {
     fn serialize_newtype_struct<T: ?Sized + Serialize>(
         self,
         _name: &'static str,
-        _value: &T,
+        value: &T,
     ) -> Result<Self::Ok, Self::Error> {
-        Err(SerializerState::Unexpected)
+        value.serialize(self)
     }
 
     fn serialize_newtype_variant<T>(

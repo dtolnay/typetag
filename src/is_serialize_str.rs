@@ -7,8 +7,8 @@ use core::fmt::{self, Display};
 use serde::ser::{self, Impossible, Serialize};
 
 pub fn is_serialize_str<T: ?Sized + Serialize>(value: &T, expected_str: &'static str) -> bool {
-    let mut ser = Serializer { expected_str };
-    match value.serialize(&mut ser) {
+    let ser = Serializer { expected_str };
+    match value.serialize(ser) {
         Ok(void) => match void {},
         Err(SerializerState::GotExpectedStr) => true,
         Err(SerializerState::GotUnexpected) => false,
@@ -41,7 +41,7 @@ struct Serializer {
     expected_str: &'static str,
 }
 
-impl ser::Serializer for &mut Serializer {
+impl ser::Serializer for Serializer {
     type Ok = Void;
     type Error = SerializerState;
 

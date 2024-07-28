@@ -1,6 +1,6 @@
 /// Check if a Serialize is a specific &'static str.
 /// This is done by implementing a Serializer whose entire purpose is to check whether a single
-/// method, serialize_str, is called with a given string.
+/// method, `serialize_str`, is called with a given string.
 use core::fmt::Error;
 use serde::{ser, Serialize};
 

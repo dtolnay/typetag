@@ -9,7 +9,7 @@ use serde::{ser, Serialize};
 pub fn is_serialize_str<T: ?Sized + Serialize>(value: &T, expected_str: &'static str) -> bool {
     let mut ser = Serializer::new(expected_str);
     let _ = value.serialize(&mut ser);
-    ser.state == GotExpectedStr
+    ser.state == SerializerState::GotExpectedStr
 }
 
 #[derive(PartialEq)]
@@ -18,8 +18,6 @@ enum SerializerState {
     GotExpectedStr,
     GotUnexpected,
 }
-
-use SerializerState::{GotExpectedStr, GotUnexpected, Start};
 
 struct Serializer {
     pub expected_str: &'static str,
@@ -30,19 +28,19 @@ impl Serializer {
     fn new(expected_str: &'static str) -> Serializer {
         Serializer {
             expected_str,
-            state: Start,
+            state: SerializerState::Start,
         }
     }
 
     #[allow(clippy::unnecessary_wraps)]
     fn unexpected(&mut self) -> Res {
-        self.state = GotUnexpected;
+        self.state = SerializerState::GotUnexpected;
         Ok(())
     }
 
     #[allow(clippy::unnecessary_wraps)]
     fn unexpected2(&mut self) -> Result<&mut Self, Error> {
-        self.state = GotUnexpected;
+        self.state = SerializerState::GotUnexpected;
         Ok(self)
     }
 }
@@ -110,10 +108,10 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     }
 
     fn serialize_str(self, v: &str) -> Res {
-        if self.state == Start && v == self.expected_str {
-            self.state = GotExpectedStr;
+        if self.state == SerializerState::Start && v == self.expected_str {
+            self.state = SerializerState::GotExpectedStr;
         } else {
-            self.state = GotUnexpected;
+            self.state = SerializerState::GotUnexpected;
         }
         Ok(())
     }

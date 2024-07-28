@@ -17,7 +17,7 @@ enum SerializerState {
     GotUnexpected,
 }
 
-use SerializerState::*;
+use SerializerState::{GotExpectedStr, GotUnexpected, Start};
 
 struct Serializer {
     pub expected_str: &'static str,

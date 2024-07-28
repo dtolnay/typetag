@@ -1,4 +1,5 @@
 use crate::internally::DEFAULT_KEY;
+use crate::is_serialize_str::is_serialize_str;
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -234,7 +235,7 @@ where
     ) -> Result<Self::SerializeStruct, Self::Error> {
         let mut state = self.delegate.serialize_map(Some(len + 1))?;
         state.serialize_entry(self.tag, self.variant)?;
-        Ok(SerializeStructAsMap::new(state))
+        Ok(SerializeStructAsMap::new(state, self.tag, self.variant))
     }
 
     fn serialize_struct_variant(
@@ -387,11 +388,13 @@ where
 
 pub struct SerializeStructAsMap<M> {
     map: M,
+    tag: &'static str,
+    variant: &'static str,
 }
 
 impl<M> SerializeStructAsMap<M> {
-    fn new(map: M) -> Self {
-        SerializeStructAsMap { map }
+    fn new(map: M, tag: &'static str, variant: &'static str) -> Self {
+        SerializeStructAsMap { map, tag, variant }
     }
 }
 
@@ -406,7 +409,12 @@ where
     where
         T: ?Sized + Serialize,
     {
-        self.map.serialize_entry(key, value)
+        if key == self.tag {
+            assert!(is_serialize_str(value, self.variant));
+            Ok(())
+        } else {
+            self.map.serialize_entry(key, value)
+        }
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {

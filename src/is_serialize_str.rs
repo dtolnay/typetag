@@ -3,59 +3,66 @@
 //! This is done by implementing a Serializer whose entire purpose is to check
 //! whether a single method, `serialize_str`, is called with a given string.
 
-use core::fmt::Error;
-use serde::{ser, Serialize};
+use core::fmt::{self, Display};
+use serde::ser::{self, Impossible, Serialize};
 
 pub fn is_serialize_str<T: ?Sized + Serialize>(value: &T, expected_str: &'static str) -> bool {
     let mut ser = Serializer::new(expected_str);
-    let _ = value.serialize(&mut ser);
-    ser.state == SerializerState::GotExpectedStr
+    match value.serialize(&mut ser) {
+        Ok(void) => match void {},
+        Err(SerializerState::GotExpectedStr) => true,
+        Err(SerializerState::GotUnexpected) => false,
+    }
 }
 
-#[derive(PartialEq)]
+enum Void {}
+
+#[derive(Debug)]
 enum SerializerState {
-    Start,
     GotExpectedStr,
     GotUnexpected,
 }
 
+impl serde::ser::Error for SerializerState {
+    fn custom<M: Display>(_message: M) -> Self {
+        SerializerState::GotUnexpected
+    }
+}
+
+impl serde::ser::StdError for SerializerState {}
+
+impl Display for SerializerState {
+    fn fmt(&self, _formatter: &mut fmt::Formatter) -> fmt::Result {
+        Ok(())
+    }
+}
+
 struct Serializer {
     expected_str: &'static str,
-    state: SerializerState,
 }
 
 impl Serializer {
     fn new(expected_str: &'static str) -> Serializer {
-        Serializer {
-            expected_str,
-            state: SerializerState::Start,
-        }
+        Serializer { expected_str }
     }
 
-    #[allow(clippy::unnecessary_wraps)]
-    fn unexpected(&mut self) -> Result<(), Error> {
-        self.state = SerializerState::GotUnexpected;
-        Ok(())
-    }
-
-    #[allow(clippy::unnecessary_wraps)]
-    fn unexpected2(&mut self) -> Result<&mut Self, Error> {
-        self.state = SerializerState::GotUnexpected;
-        Ok(self)
+    #[allow(clippy::unused_self)]
+    fn unexpected<Any>(&mut self) -> Result<Any, SerializerState> {
+        Err(SerializerState::GotUnexpected)
     }
 }
 
 impl ser::Serializer for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
+    type Ok = Void;
+    type Error = SerializerState;
 
-    type SerializeSeq = Self;
-    type SerializeTuple = Self;
-    type SerializeTupleStruct = Self;
-    type SerializeTupleVariant = Self;
-    type SerializeMap = Self;
-    type SerializeStruct = Self;
-    type SerializeStructVariant = Self;
+    type SerializeSeq = Impossible<Self::Ok, Self::Error>;
+    type SerializeTuple = Impossible<Self::Ok, Self::Error>;
+    type SerializeTupleStruct = Impossible<Self::Ok, Self::Error>;
+    type SerializeTupleVariant = Impossible<Self::Ok, Self::Error>;
+    type SerializeMap = Impossible<Self::Ok, Self::Error>;
+    type SerializeStruct = Impossible<Self::Ok, Self::Error>;
+    type SerializeStructVariant = Impossible<Self::Ok, Self::Error>;
 
     fn serialize_bool(self, _: bool) -> Result<Self::Ok, Self::Error> {
         self.unexpected()
@@ -106,12 +113,11 @@ impl ser::Serializer for &mut Serializer {
     }
 
     fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
-        if self.state == SerializerState::Start && v == self.expected_str {
-            self.state = SerializerState::GotExpectedStr;
+        if v == self.expected_str {
+            Err(SerializerState::GotExpectedStr)
         } else {
-            self.state = SerializerState::GotUnexpected;
+            self.unexpected()
         }
-        Ok(())
     }
 
     fn serialize_bytes(self, _: &[u8]) -> Result<Self::Ok, Self::Error> {
@@ -165,11 +171,11 @@ impl ser::Serializer for &mut Serializer {
     }
 
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
-        self.unexpected2()
+        self.unexpected()
     }
 
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple, Self::Error> {
-        self.unexpected2()
+        self.unexpected()
     }
 
     fn serialize_tuple_struct(
@@ -177,7 +183,7 @@ impl ser::Serializer for &mut Serializer {
         _name: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        self.unexpected2()
+        self.unexpected()
     }
 
     fn serialize_tuple_variant(
@@ -187,11 +193,11 @@ impl ser::Serializer for &mut Serializer {
         _variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleVariant, Self::Error> {
-        self.unexpected2()
+        self.unexpected()
     }
 
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
-        self.unexpected2()
+        self.unexpected()
     }
 
     fn serialize_struct(
@@ -199,7 +205,7 @@ impl ser::Serializer for &mut Serializer {
         _name: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeStruct, Self::Error> {
-        self.unexpected2()
+        self.unexpected()
     }
 
     fn serialize_struct_variant(
@@ -209,109 +215,6 @@ impl ser::Serializer for &mut Serializer {
         _variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeStructVariant, Self::Error> {
-        self.unexpected2()
-    }
-}
-
-impl ser::SerializeSeq for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_element<T: ?Sized + Serialize>(&mut self, _: &T) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
-        self.unexpected()
-    }
-}
-
-impl ser::SerializeTuple for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_element<T: ?Sized + Serialize>(&mut self, _: &T) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
-        self.unexpected()
-    }
-}
-
-impl ser::SerializeTupleStruct for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_field<T: ?Sized + Serialize>(&mut self, _: &T) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
-        self.unexpected()
-    }
-}
-
-impl ser::SerializeTupleVariant for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_field<T: ?Sized + Serialize>(&mut self, _: &T) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
-        self.unexpected()
-    }
-}
-
-impl ser::SerializeMap for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_key<T: ?Sized + Serialize>(&mut self, _: &T) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn serialize_value<T: ?Sized + Serialize>(&mut self, _: &T) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
-        self.unexpected()
-    }
-}
-
-impl ser::SerializeStruct for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_field<T: ?Sized + Serialize>(
-        &mut self,
-        _: &'static str,
-        _: &T,
-    ) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
-        self.unexpected()
-    }
-}
-
-impl ser::SerializeStructVariant for &mut Serializer {
-    type Ok = ();
-    type Error = Error;
-
-    fn serialize_field<T: ?Sized + Serialize>(
-        &mut self,
-        _: &'static str,
-        _: &T,
-    ) -> Result<(), Self::Error> {
-        self.unexpected()
-    }
-
-    fn end(self) -> Result<Self::Ok, Self::Error> {
         self.unexpected()
     }
 }

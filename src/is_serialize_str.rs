@@ -130,28 +130,33 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         self.unexpected()
     }
 
-    fn serialize_unit_struct(self, _: &'static str) -> Result<(), Error> {
+    fn serialize_unit_struct(self, _name: &'static str) -> Result<(), Error> {
         self.unexpected()
     }
 
-    fn serialize_unit_variant(self, _: &'static str, _: u32, _: &'static str) -> Result<(), Error> {
+    fn serialize_unit_variant(
+        self,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+    ) -> Result<(), Error> {
         self.unexpected()
     }
 
     fn serialize_newtype_struct<T: ?Sized + Serialize>(
         self,
-        _: &'static str,
-        _: &T,
+        _name: &'static str,
+        _value: &T,
     ) -> Result<(), Error> {
         self.unexpected()
     }
 
     fn serialize_newtype_variant<T>(
         self,
-        _: &'static str,
-        _: u32,
-        _: &'static str,
-        _: &T,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _value: &T,
     ) -> Result<(), Error>
     where
         T: ?Sized + Serialize,
@@ -159,42 +164,42 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         self.unexpected()
     }
 
-    fn serialize_seq(self, _: Option<usize>) -> Result<Self, Error> {
+    fn serialize_seq(self, _len: Option<usize>) -> Result<Self, Error> {
         self.unexpected2()
     }
 
-    fn serialize_tuple(self, _: usize) -> Result<Self, Error> {
+    fn serialize_tuple(self, _len: usize) -> Result<Self, Error> {
         self.unexpected2()
     }
 
-    fn serialize_tuple_struct(self, _: &'static str, _: usize) -> Result<Self, Error> {
+    fn serialize_tuple_struct(self, _name: &'static str, _len: usize) -> Result<Self, Error> {
         self.unexpected2()
     }
 
     fn serialize_tuple_variant(
         self,
-        _: &'static str,
-        _: u32,
-        _: &'static str,
-        _: usize,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
     ) -> Result<Self, Error> {
         self.unexpected2()
     }
 
-    fn serialize_map(self, _: Option<usize>) -> Result<Self, Error> {
+    fn serialize_map(self, _len: Option<usize>) -> Result<Self, Error> {
         self.unexpected2()
     }
 
-    fn serialize_struct(self, _: &'static str, _: usize) -> Result<Self, Error> {
+    fn serialize_struct(self, _name: &'static str, _len: usize) -> Result<Self, Error> {
         self.unexpected2()
     }
 
     fn serialize_struct_variant(
         self,
-        _: &'static str,
-        _: u32,
-        _: &'static str,
-        _: usize,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
     ) -> Result<Self, Error> {
         self.unexpected2()
     }

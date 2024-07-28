@@ -1,7 +1,8 @@
 use crate::internally::DEFAULT_KEY;
-use crate::is_serialize_str::is_serialize_str;
+use crate::is_serialize_str::expect_str;
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
+use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -410,8 +411,13 @@ where
         T: ?Sized + Serialize,
     {
         if key == self.tag {
-            assert!(is_serialize_str(value, self.variant));
-            Ok(())
+            match expect_str(value, self.variant) {
+                Ok(()) => Ok(()),
+                Err(unexpected) => Err(ser::Error::custom(format!(
+                    "mismatched value for tag {:?}: {:?} vs {:?}",
+                    self.tag, self.variant, unexpected,
+                ))),
+            }
         } else {
             self.map.serialize_entry(key, value)
         }

@@ -284,3 +284,14 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
         self.unexpected()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_serialize_str() {
+        assert!(is_serialize_str("hello", "hello"));
+        assert!(!is_serialize_str("hello", "bye"));
+    }
+}

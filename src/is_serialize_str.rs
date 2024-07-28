@@ -7,8 +7,7 @@ use core::fmt::{self, Display};
 use serde::ser::{self, Impossible, Serialize};
 
 pub fn is_serialize_str<T: ?Sized + Serialize>(value: &T, expected_str: &'static str) -> bool {
-    let ser = Serializer { expected_str };
-    match value.serialize(ser) {
+    match value.serialize(Serializer { expected_str }) {
         Ok(void) => match void {},
         Err(SerializerState::GotExpectedStr) => true,
         Err(SerializerState::GotUnexpected) => false,

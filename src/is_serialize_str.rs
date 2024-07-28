@@ -6,7 +6,10 @@
 use core::fmt::{self, Display};
 use serde::ser::{self, Error, Impossible, Serialize, StdError};
 
-pub fn is_serialize_str<T: ?Sized + Serialize>(value: &T, expected_str: &'static str) -> bool {
+pub fn is_serialize_str<T>(value: &T, expected_str: &'static str) -> bool
+where
+    T: ?Sized + Serialize,
+{
     match value.serialize(Serializer { expected_str }) {
         Ok(void) => match void {},
         Err(SerializerState::Ok) => true,
@@ -116,7 +119,10 @@ impl ser::Serializer for Serializer {
         Err(SerializerState::Unexpected)
     }
 
-    fn serialize_some<T: ?Sized + Serialize>(self, value: &T) -> Result<Self::Ok, Self::Error> {
+    fn serialize_some<T>(self, value: &T) -> Result<Self::Ok, Self::Error>
+    where
+        T: ?Sized + Serialize,
+    {
         value.serialize(self)
     }
 
@@ -137,11 +143,14 @@ impl ser::Serializer for Serializer {
         Err(SerializerState::Unexpected)
     }
 
-    fn serialize_newtype_struct<T: ?Sized + Serialize>(
+    fn serialize_newtype_struct<T>(
         self,
         _name: &'static str,
         value: &T,
-    ) -> Result<Self::Ok, Self::Error> {
+    ) -> Result<Self::Ok, Self::Error>
+    where
+        T: ?Sized + Serialize,
+    {
         value.serialize(self)
     }
 

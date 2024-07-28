@@ -20,8 +20,8 @@ enum SerializerState {
 }
 
 struct Serializer {
-    pub expected_str: &'static str,
-    pub state: SerializerState,
+    expected_str: &'static str,
+    state: SerializerState,
 }
 
 impl Serializer {

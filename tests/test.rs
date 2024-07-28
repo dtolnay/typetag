@@ -12,6 +12,12 @@ struct B {
     b: u8,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "type")]
+struct C {
+    c: u8,
+}
+
 mod externally_tagged {
     use super::{A, B};
 
@@ -66,7 +72,7 @@ mod externally_tagged {
 }
 
 mod internally_tagged {
-    use super::{A, B};
+    use super::{A, B, C};
 
     #[typetag::serde(tag = "type")]
     trait Trait {
@@ -94,11 +100,29 @@ mod internally_tagged {
         }
     }
 
+    #[typetag::serde]
+    impl Trait for C {
+        fn assert_a_is_11(&self) {
+            panic!("is not A!");
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+    }
+
     #[test]
     fn test_json_serialize() {
         let trait_object = &A { a: 11 } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"type":"A","a":11}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_serialize_with_serde_tag() {
+        let trait_object = &C { c: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"type":"C","c":11}"#;
         assert_eq!(json, expected);
     }
 

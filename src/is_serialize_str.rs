@@ -12,10 +12,11 @@ where
     T: ?Sized + Serialize,
 {
     match value.serialize(Serializer { expected_str }) {
-        Ok(void) => match void {},
         Err(SerializerState::Ok) => Ok(()),
         Err(SerializerState::UnexpectedStr(string)) => Err(Unexpected::Str(string)),
         Err(SerializerState::UnexpectedKind) => Err(Unexpected::NonStr),
+        #[allow(unreachable_patterns)]
+        Ok(void) => match void {},
     }
 }
 

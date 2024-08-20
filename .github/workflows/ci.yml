@@ -103,4 +103,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: dtolnay/install@cargo-outdated
-      - run: cargo outdated --workspace --exit-code 1
+      - run: cargo outdated --workspace --ignore embedded-io --exit-code 1

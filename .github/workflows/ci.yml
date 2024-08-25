@@ -46,6 +46,11 @@ jobs:
         run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
         if: startsWith(matrix.rust, 'nightly')
       - run: cargo test
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu' && matrix.rust == 'nightly' && always()
+        with:
+          name: Cargo.lock
+          path: Cargo.lock
 
   msrv:
     name: Rust 1.62.0

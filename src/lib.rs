@@ -301,6 +301,7 @@
 #![allow(
     clippy::missing_errors_doc,
     clippy::module_name_repetitions,
+    clippy::needless_lifetimes,
     clippy::uninlined_format_args,
     clippy::unnested_or_patterns
 )]

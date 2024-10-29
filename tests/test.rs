@@ -559,3 +559,50 @@ mod tag_mismatch {
         assert_eq!(err.to_string(), expected);
     }
 }
+
+mod async_traits {
+    use async_trait::async_trait;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct InOrder;
+
+    #[derive(Serialize, Deserialize)]
+    pub struct OutOfOrder;
+
+    #[typetag::serde]
+    #[async_trait]
+    trait TypetagAsync {
+        async fn f(&self) {}
+    }
+
+    #[typetag::serde]
+    #[async_trait]
+    impl TypetagAsync for InOrder {
+        async fn f(&self) {}
+    }
+
+    #[async_trait]
+    #[typetag::serde]
+    impl TypetagAsync for OutOfOrder {
+        async fn f(&self) {}
+    }
+
+    #[async_trait]
+    #[typetag::serde]
+    trait AsyncTypetag {
+        async fn f(&self) {}
+    }
+
+    #[async_trait]
+    #[typetag::serde]
+    impl AsyncTypetag for InOrder {
+        async fn f(&self) {}
+    }
+
+    #[typetag::serde]
+    #[async_trait]
+    impl AsyncTypetag for OutOfOrder {
+        async fn f(&self) {}
+    }
+}

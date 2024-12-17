@@ -57,9 +57,8 @@ impl Parse for Input {
                     let mut valid_assoc = false;
 
                     // Check if Self: Sized happens to be in where clause
-                    if assoc.generics.where_clause.is_some() {
-                        let where_clause = assoc.generics.where_clause.as_ref().unwrap();
-                        for predicate in &where_clause.predicates {
+                    if let Some(where_clause) = &assoc.generics.where_clause {
+                        'predicates: for predicate in &where_clause.predicates {
                             if let WherePredicate::Type(pred_type) = predicate {
                                 // Type should be self
                                 if let Type::Path(type_path) = &pred_type.bounded_ty {
@@ -68,7 +67,7 @@ impl Parse for Input {
                                             if let TypeParamBound::Trait(trait_bound) = bound {
                                                 if trait_bound.path.is_ident("Sized") {
                                                     valid_assoc = true;
-                                                    break;
+                                                    break 'predicates;
                                                 }
                                             }
                                         }

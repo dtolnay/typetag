@@ -484,6 +484,16 @@ mod generic {
     trait Generic<T> {}
 }
 
+#[rustversion::since(1.74)]
+mod assoc_type {
+    #[typetag::serde]
+    trait Trait {
+        type AssocType
+        where
+            Self: Sized;
+    }
+}
+
 mod macro_expanded {
     use super::A;
 
@@ -604,18 +614,5 @@ mod async_traits {
     #[async_trait]
     impl AsyncTypetag for OutOfOrder {
         async fn f(&self) {}
-    }
-}
-
-#[rustversion::since(1.74)]
-mod self_sized {
-    #[test]
-    fn good_assoc() {
-        #[typetag::serde]
-        trait TraitFine {
-            type AssocType
-            where
-                Self: Sized;
-        }
     }
 }

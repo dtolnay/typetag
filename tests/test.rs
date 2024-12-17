@@ -611,7 +611,7 @@ mod async_traits {
 mod self_sized {
     #[test]
     fn good_assoc() {
-        #[typetag::serialize]
+        #[typetag::serde]
         trait TraitFine {
             type AssocType
             where

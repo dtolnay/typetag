@@ -606,3 +606,15 @@ mod async_traits {
         async fn f(&self) {}
     }
 }
+
+mod self_sized {
+    #[test]
+    fn good_assoc() {
+        #[typetag::serialize]
+        trait TraitFine {
+            type AssocType
+            where
+                Self: Sized;
+        }
+    }
+}

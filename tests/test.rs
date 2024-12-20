@@ -607,6 +607,7 @@ mod async_traits {
     }
 }
 
+#[rustversion::since(1.74)]
 mod self_sized {
     #[test]
     fn good_assoc() {

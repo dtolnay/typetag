@@ -86,7 +86,6 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
                     TagContentOtherField::Content => return Ok(Some(TagOrContentField::Content)),
                     TagContentOtherField::Other => {
                         map.next_value::<IgnoredAny>()?;
-                        continue;
                     }
                 }
             }

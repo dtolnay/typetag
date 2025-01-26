@@ -45,6 +45,10 @@ jobs:
       - name: Enable type layout randomization
         run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
         if: startsWith(matrix.rust, 'nightly')
+      - name: Ignore Windows linker warning
+        run: echo RUSTFLAGS=${RUSTFLAGS}\ -Alinker_messages >> $GITHUB_ENV
+        if: matrix.rust == 'nightly-x86_64-pc-windows-gnu'
+        shell: bash
       - run: cargo test
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu' && matrix.rust == 'nightly' && always()

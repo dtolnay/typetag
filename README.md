@@ -206,6 +206,11 @@ enum WebEvent {
   anything else supported by Serde. The Serialize and Deserialize impls may be
   derived or handwritten.
 
+- *Does it work with WASM* **NO**
+
+  There are some possible solutions, see [Issue 54](https://github.com/dtolnay/typetag/issues/54),
+  but currently your best bet is to use [enum_dispatch](https://docs.rs/enum_dispatch/latest/enum_dispatch/)
+
 - *Didn't someone explain to me why this wasn't possible?* **Yes**
 
   It might have been me.

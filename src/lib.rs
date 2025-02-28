@@ -277,6 +277,12 @@
 //!   anything else supported by Serde. The Serialize and Deserialize impls may
 //!   be derived or handwritten.
 //!
+//! - *Even in WebAssembly?* **Yes**
+//!
+//!   Wasm is supported but with some extra setup described [here][wasm].
+//!
+//!   [wasm]: https://docs.rs/inventory/0.3/inventory/index.html#webassembly-and-constructors
+//!
 //! - *Didn't someone explain to me why this wasn't possible?* **Yes**
 //!
 //!   It might have been me.

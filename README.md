@@ -206,6 +206,13 @@ enum WebEvent {
   anything else supported by Serde. The Serialize and Deserialize impls may be
   derived or handwritten.
 
+- *Does it work with WASM* **Yes**
+
+  If you want to use typeatg in a wasm environment, you have to make sure that
+  the setup methods are called.
+  Please follow the instructions about 
+  [WebAssembly and constructors](https://docs.rs/inventory/0.3.19/inventory/index.html#webassembly-and-constructors).
+
 - *Didn't someone explain to me why this wasn't possible?* **Yes**
 
   It might have been me.

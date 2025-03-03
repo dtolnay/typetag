@@ -305,6 +305,7 @@
 #![no_std]
 #![doc(html_root_url = "https://docs.rs/typetag/0.2.20")]
 #![allow(
+    clippy::elidable_lifetime_names,
     clippy::missing_errors_doc,
     clippy::module_name_repetitions,
     clippy::needless_lifetimes,

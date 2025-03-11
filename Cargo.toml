@@ -9,7 +9,7 @@ edition = "2021"
 keywords = ["serde", "serialization"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/typetag"
-rust-version = "1.62"
+rust-version = "1.70"
 
 [workspace]
 members = ["impl"]

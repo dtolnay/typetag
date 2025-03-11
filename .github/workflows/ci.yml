@@ -50,6 +50,7 @@ jobs:
         run: echo RUSTFLAGS=${RUSTFLAGS}\ -Alinker_messages >> $GITHUB_ENV
         if: matrix.rust == 'nightly-x86_64-pc-windows-gnu'
         shell: bash
+      - run: cargo check
       - run: cargo test
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu' && matrix.rust == 'nightly' && always()
@@ -57,17 +58,6 @@ jobs:
           name: Cargo.lock
           path: Cargo.lock
         continue-on-error: true
-
-  msrv:
-    name: Rust 1.62.0
-    needs: pre_ci
-    if: needs.pre_ci.outputs.continue
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.62.0
-      - run: cargo check
 
   minimal:
     name: Minimal versions

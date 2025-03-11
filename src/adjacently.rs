@@ -179,9 +179,8 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
         };
 
         // Visit the first element - the tag.
-        let deserialize_fn = match seq.next_element_seed(map_lookup)? {
-            Some(deserialize_fn) => deserialize_fn,
-            None => return Err(de::Error::invalid_length(0, &self)),
+        let Some(deserialize_fn) = seq.next_element_seed(map_lookup)? else {
+            return Err(de::Error::invalid_length(0, &self));
         };
 
         // Visit the second element - the content.

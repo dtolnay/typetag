@@ -56,14 +56,11 @@ impl<'de, T: ?Sized> Visitor<'de> for TaggedVisitor<T> {
             expected: &self,
             registry: self.registry,
         };
-        let deserialize_fn = match map.next_key_seed(map_lookup)? {
-            Some(deserialize_fn) => deserialize_fn,
-            None => {
-                return Err(de::Error::custom(format_args!(
-                    "expected externally tagged dyn {}",
-                    self.trait_object
-                )));
-            }
+        let Some(deserialize_fn) = map.next_key_seed(map_lookup)? else {
+            return Err(de::Error::custom(format_args!(
+                "expected externally tagged dyn {}",
+                self.trait_object
+            )));
         };
         map.next_value_seed(FnApply { deserialize_fn })
     }

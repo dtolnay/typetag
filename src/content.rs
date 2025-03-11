@@ -670,14 +670,11 @@ where
         let (variant, value) = match self.content {
             Content::Map(value) => {
                 let mut iter = value.into_iter();
-                let (variant, value) = match iter.next() {
-                    Some(v) => v,
-                    None => {
-                        return Err(de::Error::invalid_value(
-                            Unexpected::Map,
-                            &"map with a single key",
-                        ));
-                    }
+                let Some((variant, value)) = iter.next() else {
+                    return Err(de::Error::invalid_value(
+                        Unexpected::Map,
+                        &"map with a single key",
+                    ));
                 };
                 // enums are encoded in json as maps with a single key:value pair
                 if iter.next().is_some() {

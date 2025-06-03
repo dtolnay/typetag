@@ -157,10 +157,10 @@ impl Parse for TraitArgs {
             input.parse::<Token![=]>()?;
             let default_variant: LitStr = input.parse()?;
             input.parse::<Option<Token![,]>>()?;
-            return Ok(TraitArgs::Internal {
+            Ok(TraitArgs::Internal {
                 tag,
                 default_variant: Some(default_variant),
-            });
+            })
         } else {
             Err(lookahead.error())
         }

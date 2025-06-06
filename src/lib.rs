@@ -312,6 +312,7 @@
     clippy::uninlined_format_args,
     clippy::unnested_or_patterns
 )]
+#![allow(unknown_lints, mismatched_lifetime_syntaxes)]
 
 extern crate alloc;
 

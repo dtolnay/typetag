@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [nightly, beta, stable, 1.70.0]
+        rust: [nightly, beta, stable, 1.73.0, 1.70.0]
         os: [ubuntu]
         include:
           - name: macOS
@@ -52,6 +52,7 @@ jobs:
         shell: bash
       - run: cargo check
       - run: cargo test
+        if: matrix.rust != '1.70.0'
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu' && matrix.rust == 'nightly' && always()
         with:

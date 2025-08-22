@@ -3,9 +3,3 @@ error: deserialization of generic traits is not supported yet; use #[typetag::se
   |
 2 | pub trait Trait<T> {}
   |                ^^^
-
-error: deserialization of generic impls is not supported yet; use #[typetag::serialize] to generate serialization only
- --> tests/ui/deserialize-generic.rs:7:5
-  |
-7 | impl<T> Trait<T> for Struct {}
-  |     ^^^

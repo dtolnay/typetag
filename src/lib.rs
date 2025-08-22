@@ -344,6 +344,10 @@ pub trait Deserialize {}
 
 impl<T> Deserialize for T {}
 
+pub trait TypetagName {
+    fn typetag_name() -> &'static str;
+}
+
 // Not public API. Used by generated code.
 #[doc(hidden)]
 pub mod __private {

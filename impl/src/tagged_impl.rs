@@ -1,14 +1,16 @@
 use crate::{ImplArgs, Mode};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Error, ItemImpl, Type, TypePath};
+use syn::{
+    parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause,
+};
 
 pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
-    if mode.de && !input.generics.params.is_empty() {
-        let msg = "deserialization of generic impls is not supported yet; \
-                   use #[typetag::serialize] to generate serialization only";
-        return Error::new_spanned(input.generics, msg).to_compile_error();
-    }
+    // if mode.de && !input.generics.params.is_empty() {
+    //     let msg = "deserialization of generic impls is not supported yet; \
+    //                use #[typetag::serialize] to generate serialization only";
+    //     return Error::new_spanned(input.generics, msg).to_compile_error();
+    // }
 
     let name = match args.name {
         Some(name) => quote!(#name),
@@ -30,7 +32,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         #input
     };
 
-    if mode.de {
+    if mode.de && input.generics.params.is_empty() {
         expanded.extend(quote! {
             typetag::__private::inventory::submit! {
                 <dyn #object>::typetag_register(
@@ -49,7 +51,26 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
 }
 
 fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
-    if mode.ser {
+    if mode.ser && !input.generics.params.is_empty() {
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_name(&self) -> &'static str {
+                <Self as typetag::TypetagName>::typetag_name()
+            }
+        });
+
+        input
+            .generics
+            .where_clause
+            .get_or_insert_with(|| WhereClause {
+                where_token: Where::default(),
+                predicates: Punctuated::new(),
+            })
+            .predicates
+            .push(parse_quote! {
+                Self: typetag::TypetagName
+            });
+    } else if mode.ser {
         input.items.push(parse_quote! {
             #[doc(hidden)]
             fn typetag_name(&self) -> &'static str {

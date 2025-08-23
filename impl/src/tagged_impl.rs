@@ -6,11 +6,15 @@ use syn::{
 };
 
 pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
-    // if mode.de && !input.generics.params.is_empty() {
-    //     let msg = "deserialization of generic impls is not supported yet; \
-    //                use #[typetag::serialize] to generate serialization only";
-    //     return Error::new_spanned(input.generics, msg).to_compile_error();
-    // }
+    if mode.de && input.generics.params.iter().any(|p| match p {
+        syn::GenericParam::Lifetime(_) => true,
+        syn::GenericParam::Type(_) => false,
+        syn::GenericParam::Const(_) => true,
+    }) {
+        let msg = "deserialization of generic impls with lifetimes or const params is not supported yet; \
+                   use #[typetag::serialize] to generate serialization only";
+        return Error::new_spanned(input.generics, msg).to_compile_error();
+    }
 
     let name = match args.name {
         Some(name) => quote!(#name),

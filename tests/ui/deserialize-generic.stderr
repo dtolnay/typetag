@@ -3,3 +3,15 @@ error: deserialization of generic traits is not supported yet; use #[typetag::se
   |
 2 | pub trait Trait<T> {}
   |                ^^^
+
+error: deserialization of generic impls with lifetimes or const params is not supported yet; use #[typetag::serialize] to generate serialization only
+ --> tests/ui/deserialize-generic.rs:8:5
+  |
+8 | impl<'a> Trait<i8> for StructWithLifeTime<'a> {}
+  |     ^^^^
+
+error: deserialization of generic impls with lifetimes or const params is not supported yet; use #[typetag::serialize] to generate serialization only
+  --> tests/ui/deserialize-generic.rs:14:5
+   |
+14 | impl<const N: usize> Trait<i8> for StructWithConst<N> {}
+   |     ^^^^^^^^^^^^^^^^

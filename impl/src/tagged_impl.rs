@@ -1,8 +1,8 @@
 use crate::{ImplArgs, Mode};
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
-    parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause,
+    parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause
 };
 
 pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
@@ -91,7 +91,19 @@ fn type_name(mut ty: &Type) -> Option<String> {
     loop {
         match ty {
             Type::Path(TypePath { qself: None, path }) => {
-                return Some(path.segments.last().unwrap().ident.to_string());
+                let segment = path.segments.last().unwrap();
+                let ident = segment.ident.to_string();
+                return Some(match &segment.arguments {
+                    syn::PathArguments::None => ident,
+                    syn::PathArguments::Parenthesized(_) => ident,
+                    syn::PathArguments::AngleBracketed(args) => {
+                        let mut name = ident;
+                        for t in args.to_token_stream() {
+                            name += &t.to_string();
+                        }
+                        name
+                    }
+                });
             }
             Type::Group(group) => {
                 ty = &group.elem;

@@ -497,6 +497,9 @@ mod generic_impl {
     struct Struct<T> { v: T }
 
     #[typetag::serde]
+    impl Trait for Struct<i8> {}
+
+    #[typetag::serde]
     impl<T: Debug + Serialize> Trait for Struct<T> {}
 
     impl TypetagName for Struct<String> {
@@ -543,6 +546,11 @@ mod generic_impl {
         let trait_object = &Struct { v: false } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"Struct<bool>":{"v":false}}"#;
+        assert_eq!(json, expected);
+
+        let trait_object = &Struct { v: 1i8 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"Struct<i8>":{"v":1}}"#;
         assert_eq!(json, expected);
     }
 

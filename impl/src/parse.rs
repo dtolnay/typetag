@@ -36,7 +36,7 @@ pub struct ImplArgs {
     pub name: Option<LitStr>,
 }
 
-pub struct RegisterArgs {
+pub(crate) struct RegisterArgs {
     pub trait_ty: Type,
     pub impl_ty: Type,
     pub name: Option<LitStr>,

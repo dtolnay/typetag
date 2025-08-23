@@ -488,7 +488,6 @@ mod generic_impl {
     use std::fmt::Debug;
 
     use serde::{Deserialize, Serialize};
-    use typetag::TypetagName;
 
     #[typetag::serde]
     trait Trait: Debug {}
@@ -504,39 +503,8 @@ mod generic_impl {
     #[typetag::serde]
     impl<T: Debug + Serialize> Trait for Struct<T> {}
 
-    impl TypetagName for Struct<String> {
-        fn typetag_name() -> &'static str {
-            "Struct<String>"
-        }
-    }
-
-    typetag::__private::inventory::submit! {
-        <dyn Trait>::typetag_register(
-            "Struct<String>",
-            (|deserializer| typetag::__private::Result::Ok(
-                typetag::__private::Box::new(
-                    typetag::__private::erased_serde::deserialize::<Struct<String>>(deserializer)?
-                ),
-            )) as typetag::__private::DeserializeFn<dyn Trait>,
-        )
-    }
-
-    impl TypetagName for Struct<bool> {
-        fn typetag_name() -> &'static str {
-            "Struct<bool>"
-        }
-    }
-
-    typetag::__private::inventory::submit! {
-        <dyn Trait>::typetag_register(
-            "Struct<bool>",
-            (|deserializer| typetag::__private::Result::Ok(
-                typetag::__private::Box::new(
-                    typetag::__private::erased_serde::deserialize::<Struct<bool>>(deserializer)?
-                ),
-            )) as typetag::__private::DeserializeFn<dyn Trait>,
-        )
-    }
+    typetag::register!(Trait, Struct<String>);
+    typetag::register!(Trait, Struct<bool>);
 
     #[test]
     fn test_json_serialize() {

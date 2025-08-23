@@ -5,7 +5,7 @@ use syn::{
     parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause,
 };
 
-pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
+pub(crate) fn expand(args: ImplArgs, input: ItemImpl, mode: Mode) -> TokenStream {
     if mode.de
         && input
             .generics
@@ -18,6 +18,14 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         return Error::new_spanned(input.generics, msg).to_compile_error();
     }
 
+    if input.generics.params.is_empty() {
+        expand_concrete(args, input, mode)
+    } else {
+        expand_generic(input, mode)
+    }
+}
+
+fn expand_concrete(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
     let name = match args.name {
         Some(name) => quote!(#name),
         None => match type_name(&input.self_ty) {
@@ -29,7 +37,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         },
     };
 
-    augment_impl(&mut input, &name, mode);
+    augment_impl_concrete(&mut input, &name, mode);
 
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;
@@ -38,7 +46,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         #input
     };
 
-    if mode.de && input.generics.params.is_empty() {
+    if mode.de {
         expanded.extend(quote! {
             typetag::__private::inventory::submit! {
                 <dyn #object>::typetag_register(
@@ -56,8 +64,36 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
     expanded
 }
 
-fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
-    if mode.ser && !input.generics.params.is_empty() {
+fn augment_impl_concrete(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
+    if mode.ser {
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_name(&self) -> &'static str {
+                #name
+            }
+        });
+    }
+
+    if mode.de {
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_deserialize(&self) {}
+        });
+    }
+}
+
+fn expand_generic(mut input: ItemImpl, mode: Mode) -> TokenStream {
+    augment_impl_generic(&mut input, mode);
+
+    let expanded = quote! {
+        #input
+    };
+
+    expanded
+}
+
+fn augment_impl_generic(input: &mut ItemImpl, mode: Mode) {
+    if mode.ser {
         input.items.push(parse_quote! {
             #[doc(hidden)]
             fn typetag_name(&self) -> &'static str {
@@ -76,13 +112,6 @@ fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
             .push(parse_quote! {
                 Self: typetag::TypetagName
             });
-    } else if mode.ser {
-        input.items.push(parse_quote! {
-            #[doc(hidden)]
-            fn typetag_name(&self) -> &'static str {
-                #name
-            }
-        });
     }
 
     if mode.de {
@@ -93,7 +122,7 @@ fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
     }
 }
 
-fn type_name(mut ty: &Type) -> Option<String> {
+pub(crate) fn type_name(mut ty: &Type) -> Option<String> {
     loop {
         match ty {
             Type::Path(TypePath { qself: None, path }) => {

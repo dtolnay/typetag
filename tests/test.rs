@@ -494,7 +494,9 @@ mod generic_impl {
     trait Trait: Debug {}
 
     #[derive(Debug, Serialize, Deserialize)]
-    struct Struct<T> { v: T }
+    struct Struct<T> {
+        v: T,
+    }
 
     #[typetag::serde]
     impl Trait for Struct<i8> {}
@@ -538,7 +540,9 @@ mod generic_impl {
 
     #[test]
     fn test_json_serialize() {
-        let trait_object = &Struct { v: "value".to_owned() } as &dyn Trait;
+        let trait_object = &Struct {
+            v: "value".to_string(),
+        } as &dyn Trait;
         let json = serde_json::to_string(trait_object).unwrap();
         let expected = r#"{"Struct<String>":{"v":"value"}}"#;
         assert_eq!(json, expected);

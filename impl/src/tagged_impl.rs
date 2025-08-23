@@ -2,15 +2,17 @@ use crate::{ImplArgs, Mode};
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause
+    parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause,
 };
 
 pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
-    if mode.de && input.generics.params.iter().any(|p| match p {
-        syn::GenericParam::Lifetime(_) => true,
-        syn::GenericParam::Type(_) => false,
-        syn::GenericParam::Const(_) => true,
-    }) {
+    if mode.de
+        && input
+            .generics
+            .params
+            .iter()
+            .any(|p| !matches!(p, syn::GenericParam::Type(_)))
+    {
         let msg = "deserialization of generic impls with lifetimes or const params is not supported yet; \
                    use #[typetag::serialize] to generate serialization only";
         return Error::new_spanned(input.generics, msg).to_compile_error();

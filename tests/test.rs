@@ -479,9 +479,67 @@ mod marker_traits {
     }
 }
 
-mod generic {
+mod generic_trait {
     #[typetag::serialize]
     trait Generic<T> {}
+}
+
+mod generic_impl {
+    use std::fmt::Debug;
+
+    use serde::{Deserialize, Serialize};
+
+    #[typetag::serde]
+    trait Trait: Debug {}
+
+    #[derive(Debug, Serialize, Deserialize)]
+    struct Struct<T> {
+        v: T,
+    }
+
+    #[typetag::serde]
+    impl Trait for Struct<i8> {}
+
+    #[typetag::serde]
+    impl<T: Debug + Serialize> Trait for Struct<T> {}
+
+    typetag::register!(Trait, Struct<String>);
+    typetag::register!(Trait, Struct<bool>);
+
+    #[test]
+    fn test_json_serialize() {
+        let trait_object = &Struct {
+            v: "value".to_string(),
+        } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"Struct<String>":{"v":"value"}}"#;
+        assert_eq!(json, expected);
+
+        let trait_object = &Struct { v: false } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"Struct<bool>":{"v":false}}"#;
+        assert_eq!(json, expected);
+
+        let trait_object = &Struct { v: 1i8 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"Struct<i8>":{"v":1}}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_json_deserialize() {
+        let json = r#"{"Struct<String>":{"v":"value"}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        let debug_str = format!("{:?}", &trait_object);
+        let expected = r#"Struct { v: "value" }"#;
+        assert_eq!(debug_str, expected);
+
+        let json = r#"{"Struct<bool>":{"v":false}}"#;
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json).unwrap();
+        let debug_str = format!("{:?}", &trait_object);
+        let expected = r#"Struct { v: false }"#;
+        assert_eq!(debug_str, expected);
+    }
 }
 
 #[rustversion::since(1.74)]
@@ -538,6 +596,7 @@ mod trait_hierarchy {
 
 mod tag_mismatch {
     use serde::Serialize;
+    use typetag::TypetagName;
 
     #[typetag::serialize(tag = "type")]
     trait Trait {}
@@ -550,6 +609,18 @@ mod tag_mismatch {
 
     #[typetag::serialize]
     impl<T: Serialize> Trait for Tagged<T> {}
+
+    impl TypetagName for Tagged<&'_ str> {
+        fn typetag_name() -> &'static str {
+            "Tagged"
+        }
+    }
+
+    impl TypetagName for Tagged<bool> {
+        fn typetag_name() -> &'static str {
+            "Tagged"
+        }
+    }
 
     #[test]
     fn test_json_serialize() {

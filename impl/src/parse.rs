@@ -5,12 +5,17 @@ use syn::{
     TypeParamBound, Visibility, WherePredicate,
 };
 
+use crate::Mode;
+
 mod kw {
     syn::custom_keyword!(tag);
     syn::custom_keyword!(content);
     syn::custom_keyword!(default_variant);
     syn::custom_keyword!(deny_unknown_fields);
     syn::custom_keyword!(name);
+    syn::custom_keyword!(mode);
+    syn::custom_keyword!(serialize);
+    syn::custom_keyword!(deserialize);
 }
 
 pub enum TraitArgs {
@@ -29,6 +34,13 @@ pub enum TraitArgs {
 
 pub struct ImplArgs {
     pub name: Option<LitStr>,
+}
+
+pub(crate) struct RegisterArgs {
+    pub trait_ty: Type,
+    pub impl_ty: Type,
+    pub name: Option<LitStr>,
+    pub mode: Mode,
 }
 
 pub enum Input {
@@ -181,6 +193,66 @@ impl Parse for ImplArgs {
             Some(name)
         };
         Ok(ImplArgs { name })
+    }
+}
+
+// #typetag::register(Trait, Concrete)
+// #typetag::register(Trait, Concrete, name = "Tag", mode = serde|serialize|deserialize)
+impl Parse for RegisterArgs {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let trait_ty = input.parse()?;
+        input.parse::<Token![,]>()?;
+
+        let impl_ty = input.parse()?;
+        if !input.is_empty() {
+            input.parse::<Token![,]>()?;
+        }
+
+        let mut name = None;
+        let mut mode: Option<Mode> = None;
+
+        while !input.is_empty() {
+            let lookahead = input.lookahead1();
+            if name.is_none() && lookahead.peek(kw::name) {
+                input.parse::<kw::name>()?;
+                input.parse::<Token![=]>()?;
+                name = Some(input.parse()?);
+            } else if mode.is_none() && lookahead.peek(kw::mode) {
+                input.parse::<kw::deny_unknown_fields>()?;
+                input.parse::<Token![=]>()?;
+                let lookahead = input.lookahead1();
+
+                if lookahead.peek(kw::serialize) {
+                    input.parse::<kw::serialize>()?;
+                    mode = Some(Mode {
+                        ser: true,
+                        de: false,
+                    })
+                } else if lookahead.peek(kw::deserialize) {
+                    input.parse::<kw::deserialize>()?;
+                    mode = Some(Mode {
+                        ser: false,
+                        de: true,
+                    })
+                } else {
+                    return Err(lookahead.error());
+                }
+            } else {
+                return Err(lookahead.error());
+            }
+            if !input.is_empty() {
+                input.parse::<Token![,]>()?;
+            }
+        }
+        Ok(RegisterArgs {
+            trait_ty,
+            impl_ty,
+            name,
+            mode: mode.unwrap_or(Mode {
+                ser: true,
+                de: true,
+            }),
+        })
     }
 }
 

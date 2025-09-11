@@ -6,10 +6,11 @@
 )]
 
 mod parse;
+mod register;
 mod tagged_impl;
 mod tagged_trait;
 
-use crate::parse::{ImplArgs, Input, TraitArgs};
+use crate::parse::{ImplArgs, Input, RegisterArgs, TraitArgs};
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
@@ -53,4 +54,10 @@ fn expand(args: TokenStream, input: TokenStream, mode: Mode) -> TokenStream {
             tagged_impl::expand(args, input, mode)
         }
     })
+}
+
+#[proc_macro]
+pub fn register(args: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(args as RegisterArgs);
+    TokenStream::from(register::expand(args))
 }

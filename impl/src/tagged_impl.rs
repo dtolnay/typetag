@@ -1,15 +1,31 @@
 use crate::{ImplArgs, Mode};
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{parse_quote, Error, ItemImpl, Type, TypePath};
+use quote::{quote, ToTokens};
+use syn::{
+    parse_quote, punctuated::Punctuated, token::Where, Error, ItemImpl, Type, TypePath, WhereClause,
+};
 
-pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
-    if mode.de && !input.generics.params.is_empty() {
-        let msg = "deserialization of generic impls is not supported yet; \
+pub(crate) fn expand(args: ImplArgs, input: ItemImpl, mode: Mode) -> TokenStream {
+    if mode.de
+        && input
+            .generics
+            .params
+            .iter()
+            .any(|p| !matches!(p, syn::GenericParam::Type(_)))
+    {
+        let msg = "deserialization of generic impls with lifetimes or const params is not supported yet; \
                    use #[typetag::serialize] to generate serialization only";
         return Error::new_spanned(input.generics, msg).to_compile_error();
     }
 
+    if input.generics.params.is_empty() {
+        expand_concrete(args, input, mode)
+    } else {
+        expand_generic(input, mode)
+    }
+}
+
+fn expand_concrete(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenStream {
     let name = match args.name {
         Some(name) => quote!(#name),
         None => match type_name(&input.self_ty) {
@@ -21,7 +37,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
         },
     };
 
-    augment_impl(&mut input, &name, mode);
+    augment_impl_concrete(&mut input, &name, mode);
 
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;
@@ -48,7 +64,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
     expanded
 }
 
-fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
+fn augment_impl_concrete(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
     if mode.ser {
         input.items.push(parse_quote! {
             #[doc(hidden)]
@@ -66,11 +82,63 @@ fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
     }
 }
 
-fn type_name(mut ty: &Type) -> Option<String> {
+fn expand_generic(mut input: ItemImpl, mode: Mode) -> TokenStream {
+    augment_impl_generic(&mut input, mode);
+
+    let expanded = quote! {
+        #input
+    };
+
+    expanded
+}
+
+fn augment_impl_generic(input: &mut ItemImpl, mode: Mode) {
+    if mode.ser {
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_name(&self) -> &'static str {
+                <Self as typetag::TypetagName>::typetag_name()
+            }
+        });
+
+        input
+            .generics
+            .where_clause
+            .get_or_insert_with(|| WhereClause {
+                where_token: Where::default(),
+                predicates: Punctuated::new(),
+            })
+            .predicates
+            .push(parse_quote! {
+                Self: typetag::TypetagName
+            });
+    }
+
+    if mode.de {
+        input.items.push(parse_quote! {
+            #[doc(hidden)]
+            fn typetag_deserialize(&self) {}
+        });
+    }
+}
+
+pub(crate) fn type_name(mut ty: &Type) -> Option<String> {
     loop {
         match ty {
             Type::Path(TypePath { qself: None, path }) => {
-                return Some(path.segments.last().unwrap().ident.to_string());
+                let segment = path.segments.last().unwrap();
+                let ident = segment.ident.to_string();
+                return Some(match &segment.arguments {
+                    syn::PathArguments::None => ident,
+                    syn::PathArguments::Parenthesized(_) => ident,
+                    syn::PathArguments::AngleBracketed(args) => {
+                        let mut name = ident;
+                        for t in args.to_token_stream() {
+                            name += &t.to_string();
+                        }
+                        name
+                    }
+                });
             }
             Type::Group(group) => {
                 ty = &group.elem;

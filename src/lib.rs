@@ -326,7 +326,7 @@ mod ser;
 
 use self::__private as private;
 
-pub use typetag_impl::{deserialize, serde, serialize};
+pub use typetag_impl::{deserialize, register, serde, serialize};
 
 // Object-safe trait bound inserted by typetag serialization. We want this just
 // so the serialization requirement appears on rustdoc's view of your trait.
@@ -343,6 +343,10 @@ impl<T> Serialize for T where T: ?Sized + erased_serde::Serialize {}
 pub trait Deserialize {}
 
 impl<T> Deserialize for T {}
+
+pub trait TypetagName {
+    fn typetag_name() -> &'static str;
+}
 
 // Not public API. Used by generated code.
 #[doc(hidden)]

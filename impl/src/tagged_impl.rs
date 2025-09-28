@@ -1,4 +1,4 @@
-use crate::{ImplArgs, Mode};
+use crate::{private, ImplArgs, Mode};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse_quote, Error, ItemImpl, Type, TypePath};
@@ -32,14 +32,14 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
 
     if mode.de {
         expanded.extend(quote! {
-            typetag::__private::inventory::submit! {
+            typetag::#private::inventory::submit! {
                 <dyn #object>::typetag_register(
                     #name,
-                    (|deserializer| typetag::__private::Result::Ok(
-                        typetag::__private::Box::new(
-                            typetag::__private::erased_serde::deserialize::<#this>(deserializer)?
+                    (|deserializer| typetag::#private::Result::Ok(
+                        typetag::#private::Box::new(
+                            typetag::#private::erased_serde::deserialize::<#this>(deserializer)?
                         ),
-                    )) as typetag::__private::DeserializeFn<<dyn #object as typetag::__private::Strictest>::Object>,
+                    )) as typetag::#private::DeserializeFn<<dyn #object as typetag::#private::Strictest>::Object>,
                 )
             }
         });

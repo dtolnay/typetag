@@ -11,6 +11,8 @@ mod tagged_trait;
 
 use crate::parse::{ImplArgs, Input, TraitArgs};
 use proc_macro::TokenStream;
+use proc_macro2::{Ident, Span};
+use quote::{ToTokens, TokenStreamExt as _};
 use syn::parse_macro_input;
 
 #[derive(Copy, Clone)]
@@ -53,4 +55,16 @@ fn expand(args: TokenStream, input: TokenStream, mode: Mode) -> TokenStream {
             tagged_impl::expand(args, input, mode)
         }
     })
+}
+
+#[allow(non_camel_case_types)]
+struct private;
+
+impl ToTokens for private {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        tokens.append(Ident::new(
+            concat!("__private", env!("CARGO_PKG_VERSION_PATCH")),
+            Span::call_site(),
+        ));
+    }
 }

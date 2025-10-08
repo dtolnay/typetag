@@ -1,5 +1,6 @@
 #![recursion_limit = "256"]
 #![allow(
+    clippy::expl_impl_clone_on_copy, // https://github.com/rust-lang/rust-clippy/issues/15842
     clippy::needless_pass_by_value,
     clippy::single_match_else,
     clippy::too_many_lines

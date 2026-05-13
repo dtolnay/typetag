@@ -570,6 +570,58 @@ mod tag_mismatch {
     }
 }
 
+mod const_name {
+    use super::{A, B};
+
+    const A_TAG: &str = "AConst";
+
+    #[typetag::serde]
+    trait Trait {
+        fn assert_a_is_11(&self);
+        fn assert_b_is_11(&self);
+    }
+
+    #[typetag::serde(name = A_TAG)]
+    impl Trait for A {
+        fn assert_a_is_11(&self) {
+            assert_eq!(self.a, 11);
+        }
+        fn assert_b_is_11(&self) {
+            panic!("is not B!");
+        }
+    }
+
+    #[typetag::serde(name = "BLit")]
+    impl Trait for B {
+        fn assert_a_is_11(&self) {
+            panic!("is not A!");
+        }
+        fn assert_b_is_11(&self) {
+            assert_eq!(self.b, 11);
+        }
+    }
+
+    #[test]
+    fn test_const_tag_json_round_trip() {
+        let trait_object = &A { a: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"AConst":{"a":11}}"#;
+        assert_eq!(json, expected);
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json.as_str()).unwrap();
+        trait_object.assert_a_is_11();
+    }
+
+    #[test]
+    fn test_string_literal_name_still_works() {
+        let trait_object = &B { b: 11 } as &dyn Trait;
+        let json = serde_json::to_string(trait_object).unwrap();
+        let expected = r#"{"BLit":{"b":11}}"#;
+        assert_eq!(json, expected);
+        let trait_object: Box<dyn Trait> = serde_json::from_str(json.as_str()).unwrap();
+        trait_object.assert_b_is_11();
+    }
+}
+
 mod async_traits {
     use async_trait::async_trait;
     use serde::{Deserialize, Serialize};

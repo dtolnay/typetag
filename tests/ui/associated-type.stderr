@@ -1,4 +1,4 @@
-error: typetag trait with associated type is not supported yet
+error: typetag trait with associated type without bound `Self: Sized` is unsupported yet
  --> tests/ui/associated-type.rs:3:5
   |
 3 |     type Assoc;

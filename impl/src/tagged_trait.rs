@@ -1,7 +1,7 @@
 use crate::{private, Mode, TraitArgs};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Error, ItemTrait, LitStr, TraitBoundModifier, TypeParamBound};
+use syn::{parse_quote, Error, ItemTrait, LitStr, TypeParamBound};
 
 pub(crate) fn expand(args: TraitArgs, mut input: ItemTrait, mode: Mode) -> TokenStream {
     if mode.de && !input.generics.params.is_empty() {
@@ -277,10 +277,8 @@ fn adjacently_tagged(
 fn has_supertrait(input: &ItemTrait, find: &str) -> bool {
     for supertrait in &input.supertraits {
         if let TypeParamBound::Trait(trait_bound) = supertrait {
-            if let TraitBoundModifier::None = trait_bound.modifier {
-                if trait_bound.path.is_ident(find) {
-                    return true;
-                }
+            if trait_bound.maybe.is_none() && trait_bound.path.is_ident(find) {
+                return true;
             }
         }
     }

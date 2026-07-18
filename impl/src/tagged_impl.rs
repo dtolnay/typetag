@@ -23,7 +23,7 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
 
     augment_impl(&mut input, &name, mode);
 
-    let object = &input.trait_.as_ref().unwrap().1;
+    let (object, _for_token) = &input.trait_.as_ref().unwrap();
     let this = &input.self_ty;
 
     let mut expanded = quote! {
@@ -69,7 +69,11 @@ fn augment_impl(input: &mut ItemImpl, name: &TokenStream, mode: Mode) {
 fn type_name(mut ty: &Type) -> Option<String> {
     loop {
         match ty {
-            Type::Path(TypePath { qself: None, path }) => {
+            Type::Path(TypePath {
+                attrs: _,
+                qself: None,
+                path,
+            }) => {
                 return Some(path.segments.last().unwrap().ident.to_string());
             }
             Type::Group(group) => {

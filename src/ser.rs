@@ -61,6 +61,10 @@ where
     type SerializeStruct = SerializeStructAsMap<S::SerializeMap>;
     type SerializeStructVariant = SerializeStructVariantAsMapValue<S::SerializeMap>;
 
+    fn is_human_readable(&self) -> bool {
+        self.delegate.is_human_readable()
+    }
+
     fn serialize_bool(self, value: bool) -> Result<Self::Ok, Self::Error> {
         self.serialize_default(&value)
     }
@@ -186,17 +190,19 @@ where
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
+        let is_human_readable = self.delegate.is_human_readable();
         let mut map = self.delegate.serialize_map(Some(2))?;
         map.serialize_entry(self.tag, self.variant)?;
         map.serialize_key(DEFAULT_KEY)?;
-        Ok(SerializeSeqAsMapValue::new(map, len))
+        Ok(SerializeSeqAsMapValue::new(map, len, is_human_readable))
     }
 
     fn serialize_tuple(self, len: usize) -> Result<Self::SerializeTuple, Self::Error> {
+        let is_human_readable = self.delegate.is_human_readable();
         let mut map = self.delegate.serialize_map(Some(2))?;
         map.serialize_entry(self.tag, self.variant)?;
         map.serialize_key(DEFAULT_KEY)?;
-        Ok(SerializeTupleAsMapValue::new(map, len))
+        Ok(SerializeTupleAsMapValue::new(map, len, is_human_readable))
     }
 
     fn serialize_tuple_struct(
@@ -204,10 +210,16 @@ where
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
+        let is_human_readable = self.delegate.is_human_readable();
         let mut map = self.delegate.serialize_map(Some(2))?;
         map.serialize_entry(self.tag, self.variant)?;
         map.serialize_key(DEFAULT_KEY)?;
-        Ok(SerializeTupleStructAsMapValue::new(map, name, len))
+        Ok(SerializeTupleStructAsMapValue::new(
+            map,
+            name,
+            len,
+            is_human_readable,
+        ))
     }
 
     fn serialize_tuple_variant(
@@ -217,10 +229,16 @@ where
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleVariant, Self::Error> {
+        let is_human_readable = self.delegate.is_human_readable();
         let mut map = self.delegate.serialize_map(Some(2))?;
         map.serialize_entry(self.tag, self.variant)?;
         map.serialize_key(name)?;
-        Ok(SerializeTupleStructAsMapValue::new(map, name, len))
+        Ok(SerializeTupleStructAsMapValue::new(
+            map,
+            name,
+            len,
+            is_human_readable,
+        ))
     }
 
     fn serialize_map(self, len: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
@@ -246,23 +264,31 @@ where
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeStructVariant, Self::Error> {
+        let is_human_readable = self.delegate.is_human_readable();
         let mut map = self.delegate.serialize_map(Some(2))?;
         map.serialize_entry(self.tag, self.variant)?;
         map.serialize_key(name)?;
-        Ok(SerializeStructVariantAsMapValue::new(map, name, len))
+        Ok(SerializeStructVariantAsMapValue::new(
+            map,
+            name,
+            len,
+            is_human_readable,
+        ))
     }
 }
 
 pub struct SerializeSeqAsMapValue<M> {
     map: M,
     fields: Vec<Content>,
+    is_human_readable: bool,
 }
 
 impl<M> SerializeSeqAsMapValue<M> {
-    pub fn new(map: M, len: Option<usize>) -> Self {
+    pub fn new(map: M, len: Option<usize>, is_human_readable: bool) -> Self {
         SerializeSeqAsMapValue {
             map,
             fields: Vec::with_capacity(len.unwrap_or(0)),
+            is_human_readable,
         }
     }
 }
@@ -278,7 +304,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<M::Error>::new())?;
+        let value = value.serialize(ContentSerializer::<M::Error>::new(self.is_human_readable))?;
         self.fields.push(value);
         Ok(())
     }
@@ -292,13 +318,15 @@ where
 pub struct SerializeTupleAsMapValue<M> {
     map: M,
     fields: Vec<Content>,
+    is_human_readable: bool,
 }
 
 impl<M> SerializeTupleAsMapValue<M> {
-    pub fn new(map: M, len: usize) -> Self {
+    pub fn new(map: M, len: usize, is_human_readable: bool) -> Self {
         SerializeTupleAsMapValue {
             map,
             fields: Vec::with_capacity(len),
+            is_human_readable,
         }
     }
 }
@@ -314,7 +342,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<M::Error>::new())?;
+        let value = value.serialize(ContentSerializer::<M::Error>::new(self.is_human_readable))?;
         self.fields.push(value);
         Ok(())
     }
@@ -329,14 +357,16 @@ pub struct SerializeTupleStructAsMapValue<M> {
     map: M,
     name: &'static str,
     fields: Vec<Content>,
+    is_human_readable: bool,
 }
 
 impl<M> SerializeTupleStructAsMapValue<M> {
-    pub fn new(map: M, name: &'static str, len: usize) -> Self {
+    pub fn new(map: M, name: &'static str, len: usize, is_human_readable: bool) -> Self {
         SerializeTupleStructAsMapValue {
             map,
             name,
             fields: Vec::with_capacity(len),
+            is_human_readable,
         }
     }
 }
@@ -352,7 +382,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<M::Error>::new())?;
+        let value = value.serialize(ContentSerializer::<M::Error>::new(self.is_human_readable))?;
         self.fields.push(value);
         Ok(())
     }
@@ -375,7 +405,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<M::Error>::new())?;
+        let value = value.serialize(ContentSerializer::<M::Error>::new(self.is_human_readable))?;
         self.fields.push(value);
         Ok(())
     }
@@ -432,14 +462,16 @@ pub struct SerializeStructVariantAsMapValue<M> {
     map: M,
     name: &'static str,
     fields: Vec<(&'static str, Content)>,
+    is_human_readable: bool,
 }
 
 impl<M> SerializeStructVariantAsMapValue<M> {
-    pub fn new(map: M, name: &'static str, len: usize) -> Self {
+    pub fn new(map: M, name: &'static str, len: usize, is_human_readable: bool) -> Self {
         SerializeStructVariantAsMapValue {
             map,
             name,
             fields: Vec::with_capacity(len),
+            is_human_readable,
         }
     }
 }
@@ -455,7 +487,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<M::Error>::new())?;
+        let value = value.serialize(ContentSerializer::<M::Error>::new(self.is_human_readable))?;
         self.fields.push((key, value));
         Ok(())
     }
@@ -592,12 +624,16 @@ impl Serialize for Content {
 }
 
 pub struct ContentSerializer<E> {
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
 impl<E> ContentSerializer<E> {
-    pub fn new() -> Self {
-        ContentSerializer { error: PhantomData }
+    pub fn new(is_human_readable: bool) -> Self {
+        ContentSerializer {
+            is_human_readable,
+            error: PhantomData,
+        }
     }
 }
 
@@ -615,6 +651,10 @@ where
     type SerializeMap = ContentSerializeMap<E>;
     type SerializeStruct = ContentSerializeStruct<E>;
     type SerializeStructVariant = ContentSerializeStructVariant<E>;
+
+    fn is_human_readable(&self) -> bool {
+        self.is_human_readable
+    }
 
     fn serialize_bool(self, v: bool) -> Result<Content, E> {
         Ok(Content::Bool(v))
@@ -739,6 +779,7 @@ where
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, E> {
         Ok(ContentSerializeSeq {
             elements: Vec::with_capacity(len.unwrap_or(0)),
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -746,6 +787,7 @@ where
     fn serialize_tuple(self, len: usize) -> Result<Self::SerializeTuple, E> {
         Ok(ContentSerializeTuple {
             elements: Vec::with_capacity(len),
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -758,6 +800,7 @@ where
         Ok(ContentSerializeTupleStruct {
             name,
             fields: Vec::with_capacity(len),
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -774,6 +817,7 @@ where
             variant_index,
             variant,
             fields: Vec::with_capacity(len),
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -782,6 +826,7 @@ where
         Ok(ContentSerializeMap {
             entries: Vec::with_capacity(len.unwrap_or(0)),
             key: None,
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -790,6 +835,7 @@ where
         Ok(ContentSerializeStruct {
             name,
             fields: Vec::with_capacity(len),
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -806,6 +852,7 @@ where
             variant_index,
             variant,
             fields: Vec::with_capacity(len),
+            is_human_readable: self.is_human_readable,
             error: PhantomData,
         })
     }
@@ -813,6 +860,7 @@ where
 
 pub struct ContentSerializeSeq<E> {
     elements: Vec<Content>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -827,7 +875,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.elements.push(value);
         Ok(())
     }
@@ -839,6 +887,7 @@ where
 
 pub struct ContentSerializeTuple<E> {
     elements: Vec<Content>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -853,7 +902,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.elements.push(value);
         Ok(())
     }
@@ -866,6 +915,7 @@ where
 pub struct ContentSerializeTupleStruct<E> {
     name: &'static str,
     fields: Vec<Content>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -880,7 +930,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.fields.push(value);
         Ok(())
     }
@@ -895,6 +945,7 @@ pub struct ContentSerializeTupleVariant<E> {
     variant_index: u32,
     variant: &'static str,
     fields: Vec<Content>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -909,7 +960,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.fields.push(value);
         Ok(())
     }
@@ -927,6 +978,7 @@ where
 pub struct ContentSerializeMap<E> {
     entries: Vec<(Content, Content)>,
     key: Option<Content>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -941,7 +993,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let key = key.serialize(ContentSerializer::<E>::new())?;
+        let key = key.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.key = Some(key);
         Ok(())
     }
@@ -954,7 +1006,7 @@ where
             .key
             .take()
             .expect("serialize_value called before serialize_key");
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.entries.push((key, value));
         Ok(())
     }
@@ -968,8 +1020,8 @@ where
         K: ?Sized + Serialize,
         V: ?Sized + Serialize,
     {
-        let key = key.serialize(ContentSerializer::<E>::new())?;
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let key = key.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.entries.push((key, value));
         Ok(())
     }
@@ -978,6 +1030,7 @@ where
 pub struct ContentSerializeStruct<E> {
     name: &'static str,
     fields: Vec<(&'static str, Content)>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -992,7 +1045,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.fields.push((key, value));
         Ok(())
     }
@@ -1007,6 +1060,7 @@ pub struct ContentSerializeStructVariant<E> {
     variant_index: u32,
     variant: &'static str,
     fields: Vec<(&'static str, Content)>,
+    is_human_readable: bool,
     error: PhantomData<E>,
 }
 
@@ -1021,7 +1075,7 @@ where
     where
         T: ?Sized + Serialize,
     {
-        let value = value.serialize(ContentSerializer::<E>::new())?;
+        let value = value.serialize(ContentSerializer::<E>::new(self.is_human_readable))?;
         self.fields.push((key, value));
         Ok(())
     }

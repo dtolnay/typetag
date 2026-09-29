@@ -616,3 +616,131 @@ mod async_traits {
         async fn f(&self) {}
     }
 }
+
+// https://github.com/dtolnay/typetag/issues/106
+mod internally_tagged_human_readable {
+    use serde::de::{self, Deserializer, Visitor};
+    use serde::{Deserialize, Serialize, Serializer};
+    use std::fmt;
+
+    #[derive(Copy, Clone, PartialEq, Debug)]
+    struct Id(u128);
+
+    impl Serialize for Id {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            if serializer.is_human_readable() {
+                serializer.serialize_str(&format!("{:x}", self.0))
+            } else {
+                serializer.serialize_bytes(&self.0.to_le_bytes())
+            }
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Id {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            if deserializer.is_human_readable() {
+                deserializer.deserialize_str(IdVisitor)
+            } else {
+                deserializer.deserialize_bytes(IdVisitor)
+            }
+        }
+    }
+
+    struct IdVisitor;
+
+    impl<'de> Visitor<'de> for IdVisitor {
+        type Value = Id;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("id")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Id, E>
+        where
+            E: de::Error,
+        {
+            u128::from_str_radix(value, 16).map(Id).map_err(E::custom)
+        }
+
+        fn visit_bytes<E>(self, value: &[u8]) -> Result<Id, E>
+        where
+            E: de::Error,
+        {
+            let bytes: [u8; 16] = value
+                .try_into()
+                .map_err(|_| E::custom("expected 16 bytes"))?;
+            Ok(Id(u128::from_le_bytes(bytes)))
+        }
+    }
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct Ids(Vec<Id>);
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct Pair(Id, Id);
+
+    #[typetag::serde(tag = "type")]
+    trait Value {
+        fn assert_ids(&self, expected: &[Id]);
+    }
+
+    #[typetag::serde]
+    impl Value for Ids {
+        fn assert_ids(&self, expected: &[Id]) {
+            assert_eq!(self.0, expected);
+        }
+    }
+
+    #[typetag::serde]
+    impl Value for Pair {
+        fn assert_ids(&self, expected: &[Id]) {
+            assert_eq!(&[self.0, self.1][..], expected);
+        }
+    }
+
+    fn sample() -> Ids {
+        Ids(vec![Id(0x8c2a_d9f5)])
+    }
+
+    #[test]
+    fn test_postcard_round_trip() {
+        let ids = sample();
+        let bytes = postcard::to_stdvec(&ids).unwrap();
+        let round_trip: Ids = postcard::from_bytes(&bytes).unwrap();
+        assert_eq!(round_trip, ids);
+
+        let value: Box<dyn Value> = Box::new(ids);
+        let bytes = postcard::to_stdvec(&value).unwrap();
+        let value: Box<dyn Value> = postcard::from_bytes(&bytes).unwrap();
+        value.assert_ids(&[Id(0x8c2a_d9f5)]);
+
+        let pair = Pair(Id(1), Id(2));
+        let value: Box<dyn Value> = Box::new(pair);
+        let bytes = postcard::to_stdvec(&value).unwrap();
+        let value: Box<dyn Value> = postcard::from_bytes(&bytes).unwrap();
+        value.assert_ids(&[Id(1), Id(2)]);
+    }
+
+    #[test]
+    fn test_json_round_trip() {
+        let ids = sample();
+        let value: Box<dyn Value> = Box::new(ids);
+        let json = serde_json::to_string(&value).unwrap();
+        assert!(json.contains("8c2ad9f5"), "{json}");
+        let value: Box<dyn Value> = serde_json::from_str(&json).unwrap();
+        value.assert_ids(&[Id(0x8c2a_d9f5)]);
+
+        let pair = Pair(Id(1), Id(2));
+        let value: Box<dyn Value> = Box::new(pair);
+        let json = serde_json::to_string(&value).unwrap();
+        assert!(json.contains("\"1\""), "{json}");
+        let value: Box<dyn Value> = serde_json::from_str(&json).unwrap();
+        value.assert_ids(&[Id(1), Id(2)]);
+    }
+}

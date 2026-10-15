@@ -1,12 +1,13 @@
 [package]
 name = "typetag-impl"
-version = "0.2.21"
+version = "0.2.23"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 description = "Implementation detail of the typetag crate"
 documentation = "https://docs.rs/typetag"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/typetag"
+rust-version = "1.71"
 
 [lib]
 proc-macro = true
@@ -14,7 +15,7 @@ proc-macro = true
 [dependencies]
 proc-macro2 = "1.0.74"
 quote = "1.0.35"
-syn = { version = "2.0.46", features = ["full"] }
+syn = { version = "3", features = ["full"] }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

@@ -1,8 +1,8 @@
 use quote::quote;
 use syn::parse::{Parse, ParseStream, Result};
 use syn::{
-    Attribute, Error, Generics, ImplItem, ItemImpl, ItemTrait, LitStr, Token, TraitItem, Type,
-    TypeParamBound, Visibility, WherePredicate,
+    Attribute, Error, Expr, Generics, ImplItem, ItemImpl, ItemTrait, LitStr, Token, TraitItem,
+    Type, TypeParamBound, Visibility, WherePredicate,
 };
 
 mod kw {
@@ -28,7 +28,7 @@ pub enum TraitArgs {
 }
 
 pub struct ImplArgs {
-    pub name: Option<LitStr>,
+    pub name: Option<Expr>,
 }
 
 pub enum Input {
@@ -169,6 +169,7 @@ impl Parse for TraitArgs {
 
 // #[typetag::serde]
 // #[typetag::serde(name = "Tag")]
+// #[typetag::serde(name = CONSTANT)]
 impl Parse for ImplArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let name = if input.is_empty() {
@@ -176,9 +177,9 @@ impl Parse for ImplArgs {
         } else {
             input.parse::<kw::name>()?;
             input.parse::<Token![=]>()?;
-            let name: LitStr = input.parse()?;
+            let expr: Expr = input.parse()?;
             input.parse::<Option<Token![,]>>()?;
-            Some(name)
+            Some(expr)
         };
         Ok(ImplArgs { name })
     }

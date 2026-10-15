@@ -13,7 +13,9 @@ pub(crate) fn expand(args: ImplArgs, mut input: ItemImpl, mode: Mode) -> TokenSt
     let name = match args.name {
         Some(name) => quote!(#name),
         None => match type_name(&input.self_ty) {
-            Some(name) => quote!(#name),
+            Some(name) => {
+                quote!(::core::concat!(::core::module_path!(), "::", #name))
+            }
             None => {
                 let msg = "use #[typetag::serde(name = \"...\")] to specify a unique name";
                 return Error::new_spanned(&input.self_ty, msg).to_compile_error();

@@ -58,7 +58,7 @@ impl Parse for Input {
                         let type_token = assoc.type_token;
                         let semi_token = assoc.semi_token;
                         let span = quote!(#type_token #semi_token);
-                        let msg = "typetag trait with associated type is not supported yet";
+                        let msg = "typetag trait with associated type without bound `Self: Sized` is unsupported yet";
                         return Err(Error::new_spanned(span, msg));
                     }
                 }
